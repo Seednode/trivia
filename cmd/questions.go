@@ -147,7 +147,7 @@ func serveQuestion(questions *Questions, errorChannel chan<- error) httprouter.H
 		htmlBody.WriteString(`#answer {display: none;width: 100%;padding: 50px 0;text-align: center;`)
 		htmlBody.WriteString(fmt.Sprintf(`background-color: %s; margin-top: 20px; outline: ridge;}</style>`, "lightgrey"))
 		htmlBody.WriteString(fmt.Sprintf("<title>%s</title></head>", "Trivia"))
-		htmlBody.WriteString(`<p id="hint">(Click on question to load a new one)</p>`)
+		htmlBody.WriteString(`<p id="hint">(Click on the question to load a new one)</p>`)
 		htmlBody.WriteString(fmt.Sprintf(`<body><a href="/"><p id="question">%s</p></a>`, question))
 		htmlBody.WriteString(`<button onclick="toggleAnswer()">Show Answer</button>`)
 		htmlBody.WriteString(fmt.Sprintf(`<div id="answer">%s</div>`, answer))
