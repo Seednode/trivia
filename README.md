@@ -13,7 +13,7 @@ Dockerfile available [here](https://raw.githubusercontent.com/Seednode/trivia/ma
 An example instance with most features enabled can be found [here](https://trivia.seedno.de/).
 
 ## File format
-The app expects newline-delimited text files in the following format:
+The app expects newline-delimited text files in the following format (category is optional):
 ```
 <question>|<answer>|[category]
 <question>|<answer>|[category]
