@@ -94,9 +94,10 @@ func parseQuestions(questions string, errorChannel chan<- error) *Questions {
 func getTrivia(questions *Questions) (string, string, string) {
 	questions.mu.RLock()
 	n := rand.IntN(len(questions.list))
+	q := questions.list[n]
 	questions.mu.RUnlock()
 
-	return questions.list[n].question, questions.list[n].answer, questions.list[n].category
+	return q.question, q.answer, q.category
 }
 
 func serveQuestion(questions *Questions, errorChannel chan<- error) httprouter.Handle {
