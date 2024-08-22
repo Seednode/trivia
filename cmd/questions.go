@@ -80,13 +80,15 @@ func parseQuestions(questions string, errorChannel chan<- error) *Questions {
 		retVal.list = append(retVal.list, Trivia{question, answer, category})
 	}
 
-	retVal.mu.Unlock()
-
 	if verbose {
-		fmt.Printf("%s | Loaded trivia database in %dms\n",
+		fmt.Printf("%s | Loaded %d questions from file %s in %dms\n",
 			startTime.Format(logDate),
+			len(retVal.list),
+			questions,
 			time.Since(startTime).Milliseconds())
 	}
+
+	retVal.mu.Unlock()
 
 	return &retVal
 }

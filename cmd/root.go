@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	ReleaseVersion string = "0.0.3"
+	ReleaseVersion string = "0.0.4"
 )
 
 var (
@@ -49,7 +49,7 @@ func init() {
 	rootCmd.Flags().Uint16VarP(&port, "port", "p", 8080, "port to listen on")
 	rootCmd.Flags().BoolVar(&profile, "profile", false, "register net/http/pprof handlers")
 	rootCmd.Flags().StringVarP(&questions, "questions-file", "q", "", "path to file containing trivia questions")
-	rootCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "log tool usage to stdout")
+	rootCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "log requests to stdout")
 	rootCmd.Flags().BoolVarP(&version, "version", "V", false, "display version and exit")
 
 	rootCmd.Flags().SetInterspersed(true)
