@@ -18,8 +18,7 @@ import (
 )
 
 const (
-	logDate string        = `2006-01-02T15:04:05.000-07:00`
-	timeout time.Duration = 10 * time.Second
+	logDate string = `2006-01-02T15:04:05.000-07:00`
 )
 
 func realIP(r *http.Request) string {
@@ -60,55 +59,6 @@ func serverError(w http.ResponseWriter, r *http.Request, i interface{}) {
 
 func serverErrorHandler() func(http.ResponseWriter, *http.Request, interface{}) {
 	return serverError
-}
-
-func humanReadableSize(bytes int) string {
-	unit := 1000
-
-	if bytes < unit {
-		return fmt.Sprintf("%d B", bytes)
-	}
-
-	div, exp := unit, 0
-
-	for n := bytes / unit; n >= unit; n /= unit {
-		div *= unit
-		exp++
-	}
-
-	return fmt.Sprintf("%.1f %cB",
-		float64(bytes)/float64(div),
-		"kMGTPE"[exp])
-}
-
-func serveVersion(errorChannel chan<- error) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-		startTime := time.Now()
-
-		data := []byte(fmt.Sprintf("roulette v%s\n", ReleaseVersion))
-
-		w.Header().Add("Content-Security-Policy", "default-src 'self';")
-
-		w.Header().Set("Content-Type", "text/plain;charset=UTF-8")
-
-		w.Header().Set("Content-Length", strconv.Itoa(len(data)))
-
-		written, err := w.Write(data)
-		if err != nil {
-			errorChannel <- err
-
-			return
-		}
-
-		if verbose {
-			fmt.Printf("%s | SERVE: Version page (%s) to %s in %s\n",
-				startTime.Format(logDate),
-				humanReadableSize(written),
-				realIP(r),
-				time.Since(startTime).Round(time.Microsecond),
-			)
-		}
-	}
 }
 
 func servePage() error {
