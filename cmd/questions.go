@@ -64,15 +64,26 @@ func loadQuestions(questions *Questions, errorChannel chan<- error) int {
 		for s.Scan() {
 			line := s.Text()
 
+			var question, answer, category string
+
 			split := strings.Split(line, "|")
 
-			if len(split) < 1 {
+			switch {
+			case len(split) == 2 || len(split) == 3 && split[2] == "":
+				question = split[0]
+				answer = split[1]
+				category = "Uncategorized"
+			case len(split) == 3:
+				question = split[0]
+				answer = split[1]
+				category = split[2]
+			default:
+				if verbose {
+					fmt.Println("Invalid trivia entry. Skipping.")
+				}
+
 				continue
 			}
-
-			question := split[0]
-			answer := split[1]
-			category := split[2]
 
 			questions.list = append(questions.list, Trivia{question, answer, category})
 		}
