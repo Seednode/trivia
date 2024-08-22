@@ -64,6 +64,10 @@ func loadQuestions(questions *Questions, errorChannel chan<- error) int {
 		for s.Scan() {
 			line := s.Text()
 
+			if line == "" {
+				continue
+			}
+
 			var question, answer, category string
 
 			split := strings.Split(line, "|")
@@ -79,7 +83,7 @@ func loadQuestions(questions *Questions, errorChannel chan<- error) int {
 				category = split[2]
 			default:
 				if verbose {
-					fmt.Println("Invalid trivia entry. Skipping.")
+					fmt.Printf("Invalid trivia entry: `%s`. Skipping.\n", line)
 				}
 
 				continue
