@@ -112,41 +112,30 @@ func serveQuestion(questions *Questions, errorChannel chan<- error) httprouter.H
 				r.RequestURI)
 		}
 
-		question, answer, _ := getTrivia(questions)
+		question, answer, category := getTrivia(questions)
 
-		// color, exists := Colors[category]
-		// if !exists {
-		// 	color = "lightblue"
-		// }
+		color, exists := Colors[category]
+		if !exists {
+			color = "lightblue"
+		}
 
 		var htmlBody strings.Builder
-
-		// htmlBody.WriteString(`<!DOCTYPE html><html lang="en"><head>`)
-		// htmlBody.WriteString(`<meta name="viewport" content="width=device-width, initial-scale=1">`)
-		// htmlBody.WriteString(fmt.Sprintf(`<style>html {background-color: %s; text-align: center;} a { all: unset;}`, color))
-		// htmlBody.WriteString(`p, div { font-size: clamp(var(--min), var(--val), var(--max));}`)
-		// htmlBody.WriteString(`p, div {--min: 1em; --val: 2.5vw; --max: 1.5em;}`)
-		// htmlBody.WriteString(fmt.Sprintf(`#answer {display: none;width: 100%%;padding: 50px 0;text-align: center; background-color: %s; margin-top: 20px; outline: ridge;}</style>`, "#e2dedd"))
-		// htmlBody.WriteString(fmt.Sprintf("<title>%s</title></head>", "Trivia"))
-		// htmlBody.WriteString(fmt.Sprintf(`<body><a href="/"><p id="question">%s</p></a>`, question))
-		// htmlBody.WriteString(`<button onclick="toggleAnswer()">Show Answer</button>`)
-		// htmlBody.WriteString(fmt.Sprintf(`<div id="answer">%s</div>`, answer))
-		// htmlBody.WriteString(`<script>function toggleAnswer() {var x = document.getElementById("answer");`)
-		// htmlBody.WriteString(`if (x.style.display === "block") {x.style.display = "none";} else {x.style.display = "block";}}</script>`)
-		// htmlBody.WriteString(`</body></html>`)
 
 		htmlBody.WriteString(`<!DOCTYPE html><html lang="en"><head>`)
 		htmlBody.WriteString(`<meta name="viewport" content="width=device-width, initial-scale=1">`)
 		htmlBody.WriteString(`<style>html {text-align: center;} a { all: unset;}`)
-		htmlBody.WriteString(`p, div { font-size: clamp(var(--min), var(--val), var(--max));}`)
+		htmlBody.WriteString(fmt.Sprintf(`.footer {background-color: %s; position: fixed; left: 0; bottom: 0; width: 100%%; text-align: center;}`, color))
+		htmlBody.WriteString(`p, div {font-size: clamp(var(--min), var(--val), var(--max));}`)
 		htmlBody.WriteString(`p, div {--min: 1em; --val: 2.5vw; --max: 1.5em;}`)
-		htmlBody.WriteString(fmt.Sprintf(`#answer {display: none;width: 100%%;padding: 50px 0;text-align: center; background-color: %s; margin-top: 20px; outline: ridge;}</style>`, "lightblue"))
+		htmlBody.WriteString(`#answer {display: none;width: 100%;padding: 50px 0;text-align: center;`)
+		htmlBody.WriteString(fmt.Sprintf(`background-color: %s; margin-top: 20px; outline: ridge;}</style>`, "lightgrey"))
 		htmlBody.WriteString(fmt.Sprintf("<title>%s</title></head>", "Trivia"))
 		htmlBody.WriteString(fmt.Sprintf(`<body><a href="/"><p id="question">%s</p></a>`, question))
 		htmlBody.WriteString(`<button onclick="toggleAnswer()">Show Answer</button>`)
 		htmlBody.WriteString(fmt.Sprintf(`<div id="answer">%s</div>`, answer))
 		htmlBody.WriteString(`<script>function toggleAnswer() {var x = document.getElementById("answer");`)
 		htmlBody.WriteString(`if (x.style.display === "block") {x.style.display = "none";} else {x.style.display = "block";}}</script>`)
+		htmlBody.WriteString(fmt.Sprintf(`<div class="footer"><p>%s</p>`, category))
 		htmlBody.WriteString(`</body></html>`)
 
 		_, err := w.Write([]byte(htmlBody.String() + "\n"))
