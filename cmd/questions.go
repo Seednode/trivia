@@ -40,9 +40,7 @@ var Colors = map[string]string{
 func loadQuestions(questions *Questions, errorChannel chan<- error) int {
 	startTime := time.Now()
 
-	questions.mu.Lock()
-
-	questions.list = []Trivia{}
+	list := []Trivia{}
 
 	for i := 0; i < len(files); i++ {
 		f, err := os.Open(files[i])
@@ -89,20 +87,23 @@ func loadQuestions(questions *Questions, errorChannel chan<- error) int {
 				continue
 			}
 
-			questions.list = append(questions.list, Trivia{question, answer, category})
+			list = append(list, Trivia{question, answer, category})
 		}
 	}
+
+	questions.mu.Lock()
+	questions.list = list
+	length := len(questions.list)
+	questions.mu.Unlock()
 
 	if verbose {
 		fmt.Printf("%s | Loaded %d questions in %s\n",
 			startTime.Format(logDate),
-			len(questions.list),
+			length,
 			time.Since(startTime))
 	}
 
-	questions.mu.Unlock()
-
-	return len(questions.list)
+	return length
 }
 
 func getTrivia(questions *Questions) (string, string, string) {
