@@ -17,6 +17,7 @@ const (
 var (
 	bind        string
 	exitOnError bool
+	questions   string
 	port        uint16
 	profile     bool
 	verbose     bool
@@ -47,6 +48,7 @@ func init() {
 	rootCmd.Flags().BoolVar(&exitOnError, "exit-on-error", false, "shut down webserver on error, instead of just printing the error")
 	rootCmd.Flags().Uint16VarP(&port, "port", "p", 8080, "port to listen on")
 	rootCmd.Flags().BoolVar(&profile, "profile", false, "register net/http/pprof handlers")
+	rootCmd.Flags().StringVarP(&questions, "questions-file", "q", "", "path to file containing trivia questions")
 	rootCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "log tool usage to stdout")
 	rootCmd.Flags().BoolVarP(&version, "version", "V", false, "display version and exit")
 

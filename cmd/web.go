@@ -5,7 +5,6 @@ Copyright © 2024 Seednode <seednode@seedno.de>
 package cmd
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"net"
@@ -23,38 +22,25 @@ const (
 	timeout time.Duration = 10 * time.Second
 )
 
-type Error struct {
-	Message error
-	Host    string
-	Path    string
-}
+func realIP(r *http.Request) string {
+	remoteAddr := strings.SplitAfter(r.RemoteAddr, ":")
 
-func realIP(r *http.Request, includePort bool) string {
-	fields := strings.SplitAfter(r.RemoteAddr, ":")
-
-	host := strings.TrimSuffix(strings.Join(fields[:len(fields)-1], ""), ":")
-	port := fields[len(fields)-1]
-
-	if host == "" {
+	if len(remoteAddr) < 1 {
 		return r.RemoteAddr
 	}
 
-	cfIP := r.Header.Get("Cf-Connecting-Ip")
-	xRealIP := r.Header.Get("X-Real-Ip")
+	remotePort := remoteAddr[len(remoteAddr)-1]
+
+	cfIp := r.Header.Get("Cf-Connecting-Ip")
+	xRealIp := r.Header.Get("X-Real-Ip")
 
 	switch {
-	case cfIP != "" && includePort:
-		return cfIP + ":" + port
-	case cfIP != "":
-		return cfIP
-	case xRealIP != "" && includePort:
-		return xRealIP + ":" + port
-	case xRealIP != "":
-		return xRealIP
-	case includePort:
-		return host + ":" + port
+	case cfIp != "":
+		return cfIp + ":" + remotePort
+	case xRealIp != "":
+		return xRealIp + ":" + remotePort
 	default:
-		return host
+		return r.RemoteAddr
 	}
 }
 
@@ -62,7 +48,7 @@ func serverError(w http.ResponseWriter, r *http.Request, i interface{}) {
 	if verbose {
 		fmt.Printf("%s | %s => %s (Invalid request)\n",
 			time.Now().Format(logDate),
-			realIP(r, true),
+			realIP(r),
 			r.RequestURI)
 	}
 
@@ -74,6 +60,55 @@ func serverError(w http.ResponseWriter, r *http.Request, i interface{}) {
 
 func serverErrorHandler() func(http.ResponseWriter, *http.Request, interface{}) {
 	return serverError
+}
+
+func humanReadableSize(bytes int) string {
+	unit := 1000
+
+	if bytes < unit {
+		return fmt.Sprintf("%d B", bytes)
+	}
+
+	div, exp := unit, 0
+
+	for n := bytes / unit; n >= unit; n /= unit {
+		div *= unit
+		exp++
+	}
+
+	return fmt.Sprintf("%.1f %cB",
+		float64(bytes)/float64(div),
+		"kMGTPE"[exp])
+}
+
+func serveVersion(errorChannel chan<- error) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+		startTime := time.Now()
+
+		data := []byte(fmt.Sprintf("roulette v%s\n", ReleaseVersion))
+
+		w.Header().Add("Content-Security-Policy", "default-src 'self';")
+
+		w.Header().Set("Content-Type", "text/plain;charset=UTF-8")
+
+		w.Header().Set("Content-Length", strconv.Itoa(len(data)))
+
+		written, err := w.Write(data)
+		if err != nil {
+			errorChannel <- err
+
+			return
+		}
+
+		if verbose {
+			fmt.Printf("%s | SERVE: Version page (%s) to %s in %s\n",
+				startTime.Format(logDate),
+				humanReadableSize(written),
+				realIP(r),
+				time.Since(startTime).Round(time.Microsecond),
+			)
+		}
+	}
 }
 
 func servePage() error {
@@ -110,29 +145,30 @@ func servePage() error {
 		WriteTimeout: 5 * time.Minute,
 	}
 
-	errorChannel := make(chan Error)
+	errorChannel := make(chan error)
 
 	go func() {
 		for err := range errorChannel {
-			if err.Host == "" {
-				err.Host = "local"
-			}
-
-			fmt.Printf("%s | %s => %s (Error: `%v`)\n",
-				time.Now().Format(`2006-01-02T15:04:05Z07:00`),
-				err.Host,
-				err.Path,
-				err.Message)
-
-			if exitOnError {
-				fmt.Printf("%s | Error: Shutting down...\n", time.Now().Format(logDate))
-
-				srv.Shutdown(context.Background())
-
-				break
+			switch {
+			case exitOnError:
+				fmt.Printf("%s | FATAL: %v\n", time.Now().Format(logDate), err)
+			case errors.Is(err, os.ErrNotExist) || errors.Is(err, os.ErrPermission):
+				continue
+			default:
+				fmt.Printf("%s | ERROR: %v\n", time.Now().Format(logDate), err)
 			}
 		}
 	}()
+
+	questions := parseQuestions(questions, errorChannel)
+
+	if profile {
+		registerProfile(mux)
+	}
+
+	registerQuestions(mux, questions, errorChannel)
+
+	mux.GET("/version", serveVersion(errorChannel))
 
 	if verbose {
 		fmt.Printf("%s | Listening on http://%s/\n",

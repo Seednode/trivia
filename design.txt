@@ -2,3 +2,5 @@ Parse some format of trivia questions (maybe based on most common options availa
 Display question plus black bars (optional?) over correct answer
 Multiple choice support(?)
 Basic web app
+Add optional category field
+Fancy layout(?)
