@@ -145,7 +145,7 @@ func serveQuestion(questions *Questions, errorChannel chan<- error) httprouter.H
 		htmlBody.WriteString(fmt.Sprintf(`.footer {background-color: %s; color: #0d1117; position: fixed; left: 0; bottom: 0; width: 100%%; text-align: center;}`, color))
 		htmlBody.WriteString(`p, div {font-size: clamp(var(--min), var(--val), var(--max));}`)
 		htmlBody.WriteString(`p, div {--min: 1em; --val: 2.5vw; --max: 1.5em;}`)
-		htmlBody.WriteString(`#question {line-height: 1.4; margin-left: auto; margin-right: auto; max-width: 80%;}`)
+		htmlBody.WriteString(`#question {line-height: 1.4; margin-left: auto; margin-right: auto; max-width: 80%; padding-top: 2rem; padding-bottom: 2rem;}`)
 		htmlBody.WriteString(`#answer {display: none; margin-left: auto; margin-right: auto; max-width: 80%; padding: 50px 0; text-align: center; width: 100%`)
 		htmlBody.WriteString(fmt.Sprintf(`background-color: %s; margin-top: 20px; outline: ridge;}</style>`, "lightgrey"))
 		htmlBody.WriteString(fmt.Sprintf("<title>Trivia v%s</title></head>", ReleaseVersion))
