@@ -37,21 +37,17 @@ var Colors = map[string]string{
 	"Sports & Leisure":  "#db6327",
 }
 
-func parseQuestions(files []string, errorChannel chan<- error) *Questions {
+func loadQuestions(questions *Questions, errorChannel chan<- error) int {
 	startTime := time.Now()
 
-	retVal := Questions{
-		list: []Trivia{},
-	}
+	questions.mu.Lock()
 
-	retVal.mu.Lock()
+	questions.list = []Trivia{}
 
 	for i := 0; i < len(files); i++ {
 		f, err := os.Open(files[i])
 		if err != nil {
 			errorChannel <- err
-
-			return nil
 		}
 		defer func() {
 			err = f.Close()
@@ -78,20 +74,20 @@ func parseQuestions(files []string, errorChannel chan<- error) *Questions {
 			answer := split[1]
 			category := split[2]
 
-			retVal.list = append(retVal.list, Trivia{question, answer, category})
+			questions.list = append(questions.list, Trivia{question, answer, category})
 		}
 	}
 
 	if verbose {
-		fmt.Printf("%s | Loaded %d questions in %dms\n",
+		fmt.Printf("%s | Loaded %d questions in %s\n",
 			startTime.Format(logDate),
-			len(retVal.list),
-			time.Since(startTime).Milliseconds())
+			len(questions.list),
+			time.Since(startTime))
 	}
 
-	retVal.mu.Unlock()
+	questions.mu.Unlock()
 
-	return &retVal
+	return len(questions.list)
 }
 
 func getTrivia(questions *Questions) (string, string, string) {

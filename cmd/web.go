@@ -160,10 +160,18 @@ func servePage() error {
 		}
 	}()
 
-	questions := parseQuestions(files, errorChannel)
+	questions := &Questions{
+		list: []Trivia{},
+	}
+
+	loadQuestions(questions, errorChannel)
 
 	if profile {
 		registerProfile(mux)
+	}
+
+	if reload {
+		registerReload(mux, questions, errorChannel)
 	}
 
 	registerQuestions(mux, questions, errorChannel)
