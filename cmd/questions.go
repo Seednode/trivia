@@ -37,54 +37,55 @@ var Colors = map[string]string{
 	"Sports & Leisure":  "#db6327",
 }
 
-func parseQuestions(questions string, errorChannel chan<- error) *Questions {
+func parseQuestions(files []string, errorChannel chan<- error) *Questions {
 	startTime := time.Now()
-
-	f, err := os.Open(questions)
-	if err != nil {
-		errorChannel <- err
-
-		return nil
-	}
-	defer func() {
-		err = f.Close()
-		if err != nil {
-			errorChannel <- err
-		}
-	}()
 
 	retVal := Questions{
 		list: []Trivia{},
 	}
 
-	s := bufio.NewScanner(f)
-	b := make([]byte, 0, 64*1024)
-	s.Buffer(b, 1024*1024)
-	s.Split(bufio.ScanLines)
-
 	retVal.mu.Lock()
 
-	for s.Scan() {
-		line := s.Text()
+	for i := 0; i < len(files); i++ {
+		f, err := os.Open(files[i])
+		if err != nil {
+			errorChannel <- err
 
-		split := strings.Split(line, "|")
-
-		if len(split) < 1 {
-			continue
+			return nil
 		}
+		defer func() {
+			err = f.Close()
+			if err != nil {
+				errorChannel <- err
+			}
+		}()
 
-		question := split[0]
-		answer := split[1]
-		category := split[2]
+		s := bufio.NewScanner(f)
+		b := make([]byte, 0, 64*1024)
+		s.Buffer(b, 1024*1024)
+		s.Split(bufio.ScanLines)
 
-		retVal.list = append(retVal.list, Trivia{question, answer, category})
+		for s.Scan() {
+			line := s.Text()
+
+			split := strings.Split(line, "|")
+
+			if len(split) < 1 {
+				continue
+			}
+
+			question := split[0]
+			answer := split[1]
+			category := split[2]
+
+			retVal.list = append(retVal.list, Trivia{question, answer, category})
+		}
 	}
 
 	if verbose {
-		fmt.Printf("%s | Loaded %d questions from file %s in %dms\n",
+		fmt.Printf("%s | Loaded %d questions in %dms\n",
 			startTime.Format(logDate),
 			len(retVal.list),
-			questions,
 			time.Since(startTime).Milliseconds())
 	}
 

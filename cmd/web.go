@@ -160,7 +160,7 @@ func servePage() error {
 		}
 	}()
 
-	questions := parseQuestions(questions, errorChannel)
+	questions := parseQuestions(files, errorChannel)
 
 	if profile {
 		registerProfile(mux)
