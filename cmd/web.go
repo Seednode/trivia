@@ -116,6 +116,10 @@ func servePage() error {
 
 	loadQuestions(questions, errorChannel)
 
+	if export {
+		registerExport(mux, questions, errorChannel)
+	}
+
 	if profile {
 		registerProfile(mux)
 	}

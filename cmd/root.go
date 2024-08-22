@@ -11,12 +11,13 @@ import (
 )
 
 const (
-	ReleaseVersion string = "0.4.0"
+	ReleaseVersion string = "0.5.0"
 )
 
 var (
 	bind        string
 	exitOnError bool
+	export      bool
 	files       []string
 	port        uint16
 	profile     bool
@@ -47,6 +48,7 @@ func Execute() {
 func init() {
 	rootCmd.Flags().StringVarP(&bind, "bind", "b", "0.0.0.0", "address to bind to")
 	rootCmd.Flags().BoolVar(&exitOnError, "exit-on-error", false, "shut down webserver on error, instead of just printing the error")
+	rootCmd.Flags().BoolVar(&export, "export", false, "allow exporting of trivia database")
 	rootCmd.Flags().Uint16VarP(&port, "port", "p", 8080, "port to listen on")
 	rootCmd.Flags().BoolVar(&profile, "profile", false, "register net/http/pprof handlers")
 	rootCmd.Flags().BoolVar(&reload, "reload", false, "allow live-reload of questions")
