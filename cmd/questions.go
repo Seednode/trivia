@@ -8,11 +8,13 @@ import (
 	"bufio"
 	"crypto/md5"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"math/rand/v2"
 	"net/http"
 	"os"
 	"path"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -61,6 +63,37 @@ var Colors = map[string]string{
 	"Arts & Literature": "#7a563c",
 	"Science & Nature":  "#157255",
 	"Sports & Leisure":  "#db6327",
+}
+
+func incrementCounter(w http.ResponseWriter, r *http.Request, errorChannel chan<- error) int {
+	var score int
+
+	cookie, err := r.Cookie("questionsViewed")
+	switch {
+	case errors.Is(err, http.ErrNoCookie):
+		score = 0
+	default:
+		score, err = strconv.Atoi(cookie.Value)
+		if err != nil {
+			errorChannel <- err
+
+			return 0
+		}
+	}
+
+	score = score + 1
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "questionsViewed",
+		Value:    strconv.Itoa(score),
+		Path:     "/",
+		MaxAge:   3600,
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
+	})
+
+	return score
 }
 
 func loadQuestions(questions *Questions, errorChannel chan<- error) int {
@@ -158,6 +191,8 @@ func serveQuestion(questions *Questions, errorChannel chan<- error) httprouter.H
 
 		w.Header().Set("Content-Type", "text/html;charset=UTF-8")
 
+		incrementCounter(w, r, errorChannel)
+
 		if verbose {
 			fmt.Printf("%s | %s => %s\n",
 				startTime.Format(logDate),
@@ -180,6 +215,7 @@ func serveQuestion(questions *Questions, errorChannel chan<- error) httprouter.H
 		htmlBody.WriteString(`body {color: #c9d1d9; background: #0d1117;}`)
 		htmlBody.WriteString(`#hint {font-size:12px;}`)
 		htmlBody.WriteString(fmt.Sprintf(`.footer {background-color: %s; color: #0d1117; position: fixed; left: 0; bottom: 0; width: 100%%; text-align: center;}`, color))
+		htmlBody.WriteString(`.subfooter {position: fixed; left: 0; bottom: 0; width: 100%%; text-align: center;}`)
 		htmlBody.WriteString(`p, div {font-size: clamp(var(--min), var(--val), var(--max));}`)
 		htmlBody.WriteString(`p, div {--min: 1em; --val: 2.5vw; --max: 1.5em;}`)
 		htmlBody.WriteString(`#question {line-height: 1.4; margin-left: auto; margin-right: auto; max-width: 80%; padding-top: 2rem; padding-bottom: 2rem;}`)
@@ -187,9 +223,9 @@ func serveQuestion(questions *Questions, errorChannel chan<- error) httprouter.H
 		htmlBody.WriteString(fmt.Sprintf(`background-color: %s; margin-top: 20px; outline: ridge;}</style>`, "lightgrey"))
 		htmlBody.WriteString(fmt.Sprintf("<title>Trivia v%s</title></head>", ReleaseVersion))
 		htmlBody.WriteString(`<p id="hint">(Click on the question to load a new one)</p>`)
-		htmlBody.WriteString(fmt.Sprintf(`<body><a href="/"><p id="question">%s</p></a>`, q.question))
+		htmlBody.WriteString(fmt.Sprintf(`<body><a href="/"><p id="question" title=%q>%s</p></a>`, fmt.Sprintf(`Questions viewed: %d`, incrementCounter(w, r, errorChannel)), q.question))
 		htmlBody.WriteString(`<button onclick="toggleAnswer()">Show Answer</button>`)
-		htmlBody.WriteString(fmt.Sprintf(`<div id="answer">%s</div>`, q.answer))
+		htmlBody.WriteString(fmt.Sprintf(`<div id="answer"><p>%s</p></div>`, q.answer))
 		htmlBody.WriteString(`<script>function toggleAnswer() {var x = document.getElementById("answer");`)
 		htmlBody.WriteString(`if (x.style.display === "block") {x.style.display = "none";} else {x.style.display = "block";}};`)
 		htmlBody.WriteString(`</script>`)
