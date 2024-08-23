@@ -7,15 +7,15 @@ package cmd
 import (
 	"bufio"
 	"crypto/md5"
+	random "crypto/rand"
+	"encoding/base64"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"html/template"
 	"math/rand/v2"
 	"net/http"
 	"os"
 	"path"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -32,10 +32,11 @@ const (
 <html lang="en">
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-	<meta name="Description" content="A basic trivia webapp, for my personal use (and yours, if you want)!" />
+	<meta name="Description" content="A very basic trivia webapp." />
     <meta charset="utf-8" />
 	<title>Trivia v{{.Version}}</title>
     <link rel="stylesheet" href="/css/question.css" />
+	<style nonce="{{.Nonce}}">.footer {background-color:{{.Color}};}</style>
 	<script src="/js/toggleAnswer.js"></script>
     <link rel="apple-touch-icon" sizes="180x180" href="/favicons/apple-touch-icon.png">
 	<link rel="icon" type="image/png" sizes="32x32" href="/favicons/favicon-32x32.png">
@@ -44,6 +45,12 @@ const (
 	<link rel="mask-icon" href="/favicons/safari-pinned-tab.svg" color="#5bbad5">
 	<meta name="msapplication-TileColor" content="#da532c">
 	<meta name="theme-color" content="#ffffff">
+    <meta property="og:site_name" content="https://github.com/Seednode/trivia"/>
+    <meta property="og:title" content="Trivia v{{.Version}}"/>
+    <meta property="og:description" content="A very basic trivia webapp."/>
+    <meta property="og:url" content="https://github.com/Seednode/trivia"/>
+    <meta property="og:type" content="website"/>
+    <meta property="og:image" content="https://raw.githubusercontent.com/Seednode/trivia/master/cmd/favicons/apple-touch-icon.png"/>
   </head>
 
   <body>
@@ -51,11 +58,20 @@ const (
     <a href="/"><p id="question">{{.Question}}</p></a>
 	<button onclick="toggleAnswer()">Show Answer</button>
     <div id="answer"><p>{{.Answer}}</p></div>
-    <div class="footer" style="background-color:{{.Color}}"><p>{{.Category}}</p></div>
+    <div class="footer"><p>{{.Category}}</p></div>
   </body>
 </html>
 `
 )
+
+type Template struct {
+	Version  string
+	Question string
+	Answer   string
+	Category string
+	Color    string
+	Nonce    string
+}
 
 var Colors = map[string]string{
 	"Geography":         "#329cd8",
@@ -95,35 +111,14 @@ func (q *Questions) getRandomId() string {
 	return id
 }
 
-func incrementCounter(w http.ResponseWriter, r *http.Request, errorChannel chan<- error) int {
-	var score int
-
-	cookie, err := r.Cookie("questionsViewed")
-	switch {
-	case errors.Is(err, http.ErrNoCookie):
-		score = 0
-	default:
-		score, err = strconv.Atoi(cookie.Value)
-		if err != nil {
-			errorChannel <- err
-
-			return 0
-		}
+func generateNonce() (string, error) {
+	nonceBytes := make([]byte, 32)
+	_, err := random.Read(nonceBytes)
+	if err != nil {
+		return "", fmt.Errorf("could not generate nonce")
 	}
 
-	score = score + 1
-
-	http.SetCookie(w, &http.Cookie{
-		Name:     "questionsViewed",
-		Value:    strconv.Itoa(score),
-		Path:     "/",
-		MaxAge:   3600,
-		HttpOnly: true,
-		Secure:   true,
-		SameSite: http.SameSiteLaxMode,
-	})
-
-	return score
+	return base64.URLEncoding.EncodeToString(nonceBytes), nil
 }
 
 func loadQuestions(questions *Questions, errorChannel chan<- error) int {
@@ -216,13 +211,18 @@ func serveHome(questions *Questions) httprouter.Handle {
 	}
 }
 
-func serveQuestion(questions *Questions, errorChannel chan<- error) httprouter.Handle {
+func serveQuestion(questions *Questions, template *template.Template, errorChannel chan<- error) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 		startTime := time.Now()
 
 		w.Header().Set("Content-Type", "text/html;charset=UTF-8")
 
-		incrementCounter(w, r, errorChannel)
+		nonce, err := generateNonce()
+		if err != nil {
+			errorChannel <- err
+		}
+
+		w.Header().Set("Content-Security-Policy", fmt.Sprintf("default-src 'self'; style-src 'self' 'nonce-%s'", nonce))
 
 		if verbose {
 			fmt.Printf("%s | %s => %s\n",
@@ -238,26 +238,16 @@ func serveQuestion(questions *Questions, errorChannel chan<- error) httprouter.H
 			color = "lightblue"
 		}
 
-		t, err := template.New("question").Parse(tpl)
-		if err != nil {
-			errorChannel <- err
-		}
-
-		data := struct {
-			Version  string
-			Question string
-			Answer   string
-			Category string
-			Color    string
-		}{
+		data := Template{
 			Version:  ReleaseVersion,
 			Question: q.question,
 			Answer:   q.answer,
 			Category: q.category,
 			Color:    color,
+			Nonce:    nonce,
 		}
 
-		err = t.Execute(w, data)
+		err = template.Execute(w, data)
 		if err != nil {
 			errorChannel <- err
 
@@ -267,6 +257,13 @@ func serveQuestion(questions *Questions, errorChannel chan<- error) httprouter.H
 }
 
 func registerQuestions(mux *httprouter.Router, questions *Questions, errorChannel chan<- error) {
+	template, err := template.New("question").Parse(tpl)
+	if err != nil {
+		errorChannel <- err
+
+		return
+	}
+
 	mux.GET("/", serveHome(questions))
-	mux.GET("/q/:id", serveQuestion(questions, errorChannel))
+	mux.GET("/q/:id", serveQuestion(questions, template, errorChannel))
 }

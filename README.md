@@ -1,6 +1,6 @@
 ## About
 
-A basic trivia webapp, for my personal use (and yours, if you want)!
+A very basic trivia webapp.
 
 Feature requests, code criticism, bug reports, general chit-chat, and unrelated angst accepted at `trivia@seedno.de`.
 
