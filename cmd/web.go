@@ -117,6 +117,10 @@ func servePage() error {
 
 	loadQuestions(questions, errorChannel)
 
+	mux.GET("/favicons/*favicon", serveFavicons(errorChannel))
+
+	mux.GET("/favicon.ico", serveFavicons(errorChannel))
+
 	if export {
 		registerExport(mux, questions, errorChannel)
 	}

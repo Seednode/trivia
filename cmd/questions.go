@@ -222,6 +222,7 @@ func serveQuestion(questions *Questions, errorChannel chan<- error) httprouter.H
 		htmlBody.WriteString(`#answer {display: none; margin-left: auto; margin-right: auto; max-width: 80%; padding: 50px 0; text-align: center; width: 100%`)
 		htmlBody.WriteString(fmt.Sprintf(`background-color: %s; margin-top: 20px; outline: ridge;}</style>`, "lightgrey"))
 		htmlBody.WriteString(fmt.Sprintf("<title>Trivia v%s</title></head>", ReleaseVersion))
+		htmlBody.WriteString(getFavicon())
 		htmlBody.WriteString(`<p id="hint">(Click on the question to load a new one)</p>`)
 		htmlBody.WriteString(fmt.Sprintf(`<body><a href="/"><p id="question" title=%q>%s</p></a>`, fmt.Sprintf(`Questions viewed: %d`, incrementCounter(w, r, errorChannel)), q.question))
 		htmlBody.WriteString(`<button onclick="toggleAnswer()">Show Answer</button>`)
