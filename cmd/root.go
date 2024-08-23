@@ -11,19 +11,20 @@ import (
 )
 
 const (
-	ReleaseVersion string = "0.12.1"
+	ReleaseVersion string = "0.13.0"
 )
 
 var (
-	bind        string
-	exitOnError bool
-	export      bool
-	files       []string
-	port        uint16
-	profile     bool
-	reload      bool
-	verbose     bool
-	version     bool
+	bind           string
+	exitOnError    bool
+	export         bool
+	files          []string
+	port           uint16
+	profile        bool
+	reload         bool
+	reloadInterval string
+	verbose        bool
+	version        bool
 
 	requiredArgs = []string{}
 
@@ -52,6 +53,7 @@ func init() {
 	rootCmd.Flags().Uint16VarP(&port, "port", "p", 8080, "port to listen on")
 	rootCmd.Flags().BoolVar(&profile, "profile", false, "register net/http/pprof handlers")
 	rootCmd.Flags().BoolVar(&reload, "reload", false, "allow live-reload of questions")
+	rootCmd.Flags().StringVar(&reloadInterval, "reload-interval", "", "interval at which to rebuild question list (e.g. \"5m\" or \"1h\")")
 	rootCmd.Flags().StringSliceVarP(&files, "question-file", "f", []string{}, "path to file containing trivia questions (can be supplied multiple times)")
 	rootCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "log requests to stdout")
 	rootCmd.Flags().BoolVarP(&version, "version", "V", false, "display version and exit")

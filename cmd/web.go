@@ -129,6 +129,13 @@ func servePage() error {
 		registerReload(mux, questions, errorChannel)
 	}
 
+	if reloadInterval != "" {
+		quit := make(chan struct{})
+		defer close(quit)
+
+		registerReloadInterval(questions, quit, errorChannel)
+	}
+
 	registerQuestions(mux, questions, errorChannel)
 
 	mux.GET("/version", serveVersion(errorChannel))
