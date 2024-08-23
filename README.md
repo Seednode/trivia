@@ -56,16 +56,17 @@ Usage:
   trivia [flags]
 
 Flags:
-  -b, --bind string             address to bind to (default "0.0.0.0")
-      --exit-on-error           shut down webserver on error, instead of just printing the error
-      --export                  allow exporting of trivia database
-  -h, --help                    help for trivia
-  -p, --port uint16             port to listen on (default 8080)
-      --profile                 register net/http/pprof handlers
-  -f, --question-file strings   path to file containing trivia questions (can be supplied multiple times)
-      --reload                  allow live-reload of questions
-  -v, --verbose                 log requests to stdout
-  -V, --version                 display version and exit
+  -b, --bind string              address to bind to (default "0.0.0.0")
+      --exit-on-error            shut down webserver on error, instead of just printing the error
+      --export                   allow exporting of trivia database
+  -h, --help                     help for trivia
+  -p, --port uint16              port to listen on (default 8080)
+      --profile                  register net/http/pprof handlers
+  -f, --question-file strings    path to file containing trivia questions (can be supplied multiple times)
+      --reload                   allow live-reload of questions
+      --reload-interval string   interval at which to rebuild question list (e.g. "5m" or "1h")
+  -v, --verbose                  log requests to stdout
+  -V, --version                  display version and exit
 ```
 
 ## Building the Docker image
