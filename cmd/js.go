@@ -6,6 +6,7 @@ package cmd
 
 import (
 	"embed"
+	"mime"
 	"net/http"
 	"strconv"
 	"strings"
@@ -13,14 +14,16 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-//go:embed favicons/*
-var favicons embed.FS
+//go:embed js/*
+var js embed.FS
 
-func serveFavicons(errorChannel chan<- error) httprouter.Handle {
+func serveJs(errorChannel chan<- error) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+		w.Header().Set("Content-Type", "text/javascript; charset=utf-8")
+
 		fname := strings.TrimPrefix(r.URL.Path, "/")
 
-		data, err := favicons.ReadFile(fname)
+		data, err := js.ReadFile(fname)
 		if err != nil {
 			return
 		}
@@ -36,7 +39,8 @@ func serveFavicons(errorChannel chan<- error) httprouter.Handle {
 	}
 }
 
-func registerFavicons(mux *httprouter.Router, errorChannel chan<- error) {
-	mux.GET("/favicons/:favicon", serveFavicons(errorChannel))
-	mux.GET("/favicon.ico", serveFavicons(errorChannel))
+func registerJs(mux *httprouter.Router, errorChannel chan<- error) {
+	mime.AddExtensionType(".js", "application/javascript; charset=utf-8")
+
+	mux.GET("/js/:js", serveJs(errorChannel))
 }

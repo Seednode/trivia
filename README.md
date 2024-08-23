@@ -48,6 +48,8 @@ If the `--reload` flag is passed, an additional `/reload` endpoint is registered
 
 The trivia database can be live-reloaded from all files passed in the `-f|--question-file` flags by calling this endpoint.
 
+Scheduled index rebuilds can be enabled via the `--reload-interval <duration>` flag, which accepts [time.Duration](https://pkg.go.dev/time#ParseDuration) strings.
+
 ## Usage output
 ```
 Serves a basic trivia web frontend.

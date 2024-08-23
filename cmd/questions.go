@@ -10,6 +10,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"html/template"
 	"math/rand/v2"
 	"net/http"
 	"os"
@@ -22,6 +23,35 @@ import (
 	"github.com/google/uuid"
 	"github.com/julienschmidt/httprouter"
 )
+
+const tpl = `
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="Description" content="A basic trivia webapp, for my personal use (and yours, if you want)!" />
+    <meta charset="utf-8" />
+	<title>Trivia v{{.Version}}</title>
+    <link rel="stylesheet" href="/css/question.css" />
+	<script src="/js/toggleAnswer.js"></script>
+    <link rel="apple-touch-icon" sizes="180x180" href="/favicons/apple-touch-icon.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="/favicons/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="/favicons/favicon-16x16.png">
+	<link rel="manifest" href="/favicons/site.webmanifest">
+	<link rel="mask-icon" href="/favicons/safari-pinned-tab.svg" color="#5bbad5">
+	<meta name="msapplication-TileColor" content="#da532c">
+	<meta name="theme-color" content="#ffffff">
+  </head>
+
+  <body>
+    <p id="hint">(Click on the question to load a new one)</p>
+    <a href="/"><p id="question">{{.Question}}</p></a>
+	<button onclick="toggleAnswer()">Show Answer</button>
+    <div id="answer"><p>{{.Answer}}</p></div>
+    <div class="footer" style="background-color:{{.Color}}"><p>{{.Category}}</p></div>
+  </body>
+</html>
+`
 
 const (
 	redirectStatusCode int = http.StatusSeeOther
@@ -207,33 +237,26 @@ func serveQuestion(questions *Questions, errorChannel chan<- error) httprouter.H
 			color = "lightblue"
 		}
 
-		var htmlBody strings.Builder
+		t, err := template.New("question").Parse(tpl)
+		if err != nil {
+			errorChannel <- err
+		}
 
-		htmlBody.WriteString(`<!DOCTYPE html><html lang="en"><head>`)
-		htmlBody.WriteString(`<meta name="viewport" content="width=device-width, initial-scale=1">`)
-		htmlBody.WriteString(`<style>html {text-align: center;} a { all: unset;}`)
-		htmlBody.WriteString(`body {color: #c9d1d9; background: #0d1117;}`)
-		htmlBody.WriteString(`#hint {font-size:12px;}`)
-		htmlBody.WriteString(fmt.Sprintf(`.footer {background-color: %s; color: #0d1117; position: fixed; left: 0; bottom: 0; width: 100%%; text-align: center;}`, color))
-		htmlBody.WriteString(`.subfooter {position: fixed; left: 0; bottom: 0; width: 100%%; text-align: center;}`)
-		htmlBody.WriteString(`p, div {font-size: clamp(var(--min), var(--val), var(--max));}`)
-		htmlBody.WriteString(`p, div {--min: 1em; --val: 2.5vw; --max: 1.5em;}`)
-		htmlBody.WriteString(`#question {line-height: 1.4; margin-left: auto; margin-right: auto; max-width: 80%; padding-top: 2rem; padding-bottom: 2rem;}`)
-		htmlBody.WriteString(`#answer {display: none; margin-left: auto; margin-right: auto; max-width: 80%; padding: 50px 0; text-align: center; width: 100%`)
-		htmlBody.WriteString(fmt.Sprintf(`background-color: %s; margin-top: 20px; outline: ridge;}</style>`, "lightgrey"))
-		htmlBody.WriteString(fmt.Sprintf("<title>Trivia v%s</title></head>", ReleaseVersion))
-		htmlBody.WriteString(getFavicon())
-		htmlBody.WriteString(`<p id="hint">(Click on the question to load a new one)</p>`)
-		htmlBody.WriteString(fmt.Sprintf(`<body><a href="/"><p id="question" title=%q>%s</p></a>`, fmt.Sprintf(`Questions viewed: %d`, incrementCounter(w, r, errorChannel)), q.question))
-		htmlBody.WriteString(`<button onclick="toggleAnswer()">Show Answer</button>`)
-		htmlBody.WriteString(fmt.Sprintf(`<div id="answer"><p>%s</p></div>`, q.answer))
-		htmlBody.WriteString(`<script>function toggleAnswer() {var x = document.getElementById("answer");`)
-		htmlBody.WriteString(`if (x.style.display === "block") {x.style.display = "none";} else {x.style.display = "block";}};`)
-		htmlBody.WriteString(`</script>`)
-		htmlBody.WriteString(fmt.Sprintf(`<div class="footer"><p>%s</p>`, q.category))
-		htmlBody.WriteString(`</body></html>`)
+		data := struct {
+			Version  string
+			Question string
+			Answer   string
+			Category string
+			Color    string
+		}{
+			Version:  ReleaseVersion,
+			Question: q.question,
+			Answer:   q.answer,
+			Category: q.category,
+			Color:    color,
+		}
 
-		_, err := w.Write([]byte(htmlBody.String() + "\n"))
+		err = t.Execute(w, data)
 		if err != nil {
 			errorChannel <- err
 
