@@ -206,7 +206,8 @@ func serveHome(questions *Questions) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 		q := questions.getRandomId()
 
-		newUrl := fmt.Sprintf("http://%s/q/%s",
+		newUrl := fmt.Sprintf("%s//%s/q/%s",
+			r.URL.Scheme,
 			r.Host,
 			q,
 		)
