@@ -24,7 +24,10 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-const tpl = `
+const (
+	redirectStatusCode int = http.StatusSeeOther
+
+	tpl = `
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -44,7 +47,7 @@ const tpl = `
   </head>
 
   <body>
-    <p id="hint">(Click on the question to load a new one)</p>
+    <p id="hint">(Click on a question to load a new one)</p>
     <a href="/"><p id="question">{{.Question}}</p></a>
 	<button onclick="toggleAnswer()">Show Answer</button>
     <div id="answer"><p>{{.Answer}}</p></div>
@@ -52,10 +55,16 @@ const tpl = `
   </body>
 </html>
 `
-
-const (
-	redirectStatusCode int = http.StatusSeeOther
 )
+
+var Colors = map[string]string{
+	"Geography":         "#329cd8",
+	"Entertainment":     "#da6ab2",
+	"History":           "#e5cb3a",
+	"Arts & Literature": "#7a563c",
+	"Science & Nature":  "#157255",
+	"Sports & Leisure":  "#db6327",
+}
 
 type Trivia struct {
 	question string
@@ -84,15 +93,6 @@ func (q *Questions) getRandomId() string {
 	q.mu.RUnlock()
 
 	return id
-}
-
-var Colors = map[string]string{
-	"Geography":         "#329cd8",
-	"Entertainment":     "#da6ab2",
-	"History":           "#e5cb3a",
-	"Arts & Literature": "#7a563c",
-	"Science & Nature":  "#157255",
-	"Sports & Leisure":  "#db6327",
 }
 
 func incrementCounter(w http.ResponseWriter, r *http.Request, errorChannel chan<- error) int {
