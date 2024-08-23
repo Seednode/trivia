@@ -56,7 +56,7 @@ const (
   <body>
     <p id="hint">(Click on a question to load a new one)</p>
     <a href="/"><p id="question">{{.Question}}</p></a>
-	<button onclick="toggleAnswer()">Show Answer</button>
+	<button id="toggle">Show Answer</button>
     <div id="answer"><p>{{.Answer}}</p></div>
     <div class="footer"><p>{{.Category}}</p></div>
   </body>
@@ -222,7 +222,7 @@ func serveQuestion(questions *Questions, template *template.Template, errorChann
 			errorChannel <- err
 		}
 
-		w.Header().Set("Content-Security-Policy", fmt.Sprintf("default-src 'self'; style-src 'self' 'nonce-%s'", nonce))
+		w.Header().Set("Content-Security-Policy", fmt.Sprintf("default-src 'self' 'nonce-%s'", nonce))
 
 		if verbose {
 			fmt.Printf("%s | %s => %s\n",

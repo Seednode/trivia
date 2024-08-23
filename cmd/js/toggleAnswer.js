@@ -6,3 +6,8 @@ function toggleAnswer() {
         x.style.display = "block";
     }
 }
+
+document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('toggle')
+    .addEventListener('click', toggleAnswer);
+});
