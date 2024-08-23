@@ -6,6 +6,8 @@ package cmd
 
 import (
 	"bufio"
+	"crypto/md5"
+	"encoding/hex"
 	"fmt"
 	"math/rand/v2"
 	"net/http"
@@ -29,17 +31,25 @@ type Trivia struct {
 	category string
 }
 
+func (t *Trivia) getId() string {
+	md5hash := md5.New()
+	md5hash.Write([]byte(t.question + t.answer + t.category))
+	md5string := hex.EncodeToString(md5hash.Sum(nil))
+
+	return uuid.NewMD5(uuid.NameSpaceURL, []byte(md5string)).String()
+}
+
 type Questions struct {
 	mu    sync.RWMutex
 	index []string
 	list  map[string]Trivia
 }
 
-func (questions *Questions) getRandomId() string {
-	questions.mu.RLock()
-	n := rand.IntN(len(questions.index))
-	id := questions.index[n]
-	questions.mu.RUnlock()
+func (q *Questions) getRandomId() string {
+	q.mu.RLock()
+	n := rand.IntN(len(q.index))
+	id := q.index[n]
+	q.mu.RUnlock()
 
 	return id
 }
@@ -104,10 +114,12 @@ func loadQuestions(questions *Questions, errorChannel chan<- error) int {
 				continue
 			}
 
-			id := uuid.NewString()
+			t := Trivia{question, answer, category}
+
+			id := t.getId()
 
 			index = append(index, id)
-			list[id] = Trivia{question, answer, category}
+			list[id] = t
 		}
 	}
 
