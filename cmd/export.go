@@ -28,8 +28,8 @@ func serveExport(questions *Questions, errorChannel chan<- error) httprouter.Han
 		questions.mu.RLock()
 		defer questions.mu.RUnlock()
 
-		for i := 0; i < len(questions.list); i++ {
-			entry := questions.list[i]
+		for i := 0; i < len(questions.index); i++ {
+			entry := questions.list[questions.index[i]]
 			_, err := w.Write([]byte(fmt.Sprintf("Category: %s\nQuestion: %s\nAnswer: %s\n\n", entry.category, entry.question, entry.answer)))
 			if err != nil {
 				errorChannel <- err

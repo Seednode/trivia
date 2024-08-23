@@ -111,7 +111,8 @@ func servePage() error {
 	}()
 
 	questions := &Questions{
-		list: []Trivia{},
+		index: []string{},
+		list:  map[string]Trivia{},
 	}
 
 	loadQuestions(questions, errorChannel)

@@ -10,11 +10,17 @@ import (
 	"math/rand/v2"
 	"net/http"
 	"os"
+	"path"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/julienschmidt/httprouter"
+)
+
+const (
+	redirectStatusCode int = http.StatusSeeOther
 )
 
 type Trivia struct {
@@ -24,8 +30,18 @@ type Trivia struct {
 }
 
 type Questions struct {
-	mu   sync.RWMutex
-	list []Trivia
+	mu    sync.RWMutex
+	index []string
+	list  map[string]Trivia
+}
+
+func (questions *Questions) getRandomId() string {
+	questions.mu.RLock()
+	n := rand.IntN(len(questions.index))
+	id := questions.index[n]
+	questions.mu.RUnlock()
+
+	return id
 }
 
 var Colors = map[string]string{
@@ -40,7 +56,8 @@ var Colors = map[string]string{
 func loadQuestions(questions *Questions, errorChannel chan<- error) int {
 	startTime := time.Now()
 
-	list := []Trivia{}
+	index := []string{}
+	list := map[string]Trivia{}
 
 	for i := 0; i < len(files); i++ {
 		f, err := os.Open(files[i])
@@ -87,11 +104,15 @@ func loadQuestions(questions *Questions, errorChannel chan<- error) int {
 				continue
 			}
 
-			list = append(list, Trivia{question, answer, category})
+			id := uuid.NewString()
+
+			index = append(index, id)
+			list[id] = Trivia{question, answer, category}
 		}
 	}
 
 	questions.mu.Lock()
+	questions.index = index
 	questions.list = list
 	length := len(questions.list)
 	questions.mu.Unlock()
@@ -106,13 +127,17 @@ func loadQuestions(questions *Questions, errorChannel chan<- error) int {
 	return length
 }
 
-func getTrivia(questions *Questions) (string, string, string) {
-	questions.mu.RLock()
-	n := rand.IntN(len(questions.list))
-	q := questions.list[n]
-	questions.mu.RUnlock()
+func serveNewQuestion(questions *Questions) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+		q := questions.getRandomId()
 
-	return q.question, q.answer, q.category
+		newUrl := fmt.Sprintf("http://%s/q/%s",
+			r.Host,
+			q,
+		)
+
+		http.Redirect(w, r, newUrl, redirectStatusCode)
+	}
 }
 
 func serveQuestion(questions *Questions, errorChannel chan<- error) httprouter.Handle {
@@ -128,9 +153,11 @@ func serveQuestion(questions *Questions, errorChannel chan<- error) httprouter.H
 				r.RequestURI)
 		}
 
-		question, answer, category := getTrivia(questions)
+		id := path.Base(r.URL.Path)
 
-		color, exists := Colors[category]
+		q := questions.list[id]
+
+		color, exists := Colors[q.category]
 		if !exists {
 			color = "lightblue"
 		}
@@ -150,12 +177,13 @@ func serveQuestion(questions *Questions, errorChannel chan<- error) httprouter.H
 		htmlBody.WriteString(fmt.Sprintf(`background-color: %s; margin-top: 20px; outline: ridge;}</style>`, "lightgrey"))
 		htmlBody.WriteString(fmt.Sprintf("<title>Trivia v%s</title></head>", ReleaseVersion))
 		htmlBody.WriteString(`<p id="hint">(Click on the question to load a new one)</p>`)
-		htmlBody.WriteString(fmt.Sprintf(`<body><a href="/"><p id="question">%s</p></a>`, question))
+		htmlBody.WriteString(fmt.Sprintf(`<body><a href="/"><p id="question">%s</p></a>`, q.question))
 		htmlBody.WriteString(`<button onclick="toggleAnswer()">Show Answer</button>`)
-		htmlBody.WriteString(fmt.Sprintf(`<div id="answer">%s</div>`, answer))
+		htmlBody.WriteString(fmt.Sprintf(`<div id="answer">%s</div>`, q.answer))
 		htmlBody.WriteString(`<script>function toggleAnswer() {var x = document.getElementById("answer");`)
-		htmlBody.WriteString(`if (x.style.display === "block") {x.style.display = "none";} else {x.style.display = "block";}}</script>`)
-		htmlBody.WriteString(fmt.Sprintf(`<div class="footer"><p>%s</p>`, category))
+		htmlBody.WriteString(`if (x.style.display === "block") {x.style.display = "none";} else {x.style.display = "block";}};`)
+		htmlBody.WriteString(`</script>`)
+		htmlBody.WriteString(fmt.Sprintf(`<div class="footer"><p>%s</p>`, q.category))
 		htmlBody.WriteString(`</body></html>`)
 
 		_, err := w.Write([]byte(htmlBody.String() + "\n"))
@@ -168,5 +196,6 @@ func serveQuestion(questions *Questions, errorChannel chan<- error) httprouter.H
 }
 
 func registerQuestions(mux *httprouter.Router, questions *Questions, errorChannel chan<- error) {
-	mux.GET("/", serveQuestion(questions, errorChannel))
+	mux.GET("/", serveNewQuestion(questions))
+	mux.GET("/q/:id", serveQuestion(questions, errorChannel))
 }
