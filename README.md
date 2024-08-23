@@ -13,7 +13,7 @@ Dockerfile available [here](https://raw.githubusercontent.com/Seednode/trivia/ma
 An example instance with most features enabled can be found [here](https://trivia.seedno.de/).
 
 ## File format
-The app expects newline-delimited text files in the following format (category is optional):
+The app expects newline-delimited text files in the following format (category is optional), with the file extension `.trivia` (configurable):
 ```
 <question>|<answer>|[category]
 <question>|<answer>|[category]
@@ -29,6 +29,8 @@ Is mayonnaise an instrument?|No, Patrick, mayonnaise is not an instrument|Cartoo
 ```
 
 You can specify as many input files as you'd like, by repeating the `-f|--question-file` flag.
+
+You can also specify input directories, optionally `--recursive`, from which trivia files will be loaded.
 
 ## Exporting
 If the `--export` flag is passed, an additional `/export` endpoint is registered.
@@ -61,10 +63,13 @@ Flags:
   -b, --bind string              address to bind to (default "0.0.0.0")
       --exit-on-error            shut down webserver on error, instead of just printing the error
       --export                   allow exporting of trivia database
+      --extension string         only process files ending in this extension (default ".trivia")
   -h, --help                     help for trivia
   -p, --port uint16              port to listen on (default 8080)
       --profile                  register net/http/pprof handlers
   -f, --question-file strings    path to file containing trivia questions (can be supplied multiple times)
+      --question-path strings    path containing trivia question files (can be supplied multiple times)
+      --recursive                recurse into directories when supplying --question-path
       --reload                   allow live-reload of questions
       --reload-interval string   interval at which to rebuild question list (e.g. "5m" or "1h")
   -v, --verbose                  log requests to stdout
