@@ -139,7 +139,7 @@ func loadQuestions(questions *Questions, errorChannel chan<- error) int {
 	return length
 }
 
-func serveNewQuestion(questions *Questions) httprouter.Handle {
+func serveHome(questions *Questions) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 		q := questions.getRandomId()
 
@@ -165,9 +165,7 @@ func serveQuestion(questions *Questions, errorChannel chan<- error) httprouter.H
 				r.RequestURI)
 		}
 
-		id := path.Base(r.URL.Path)
-
-		q := questions.list[id]
+		q := questions.list[path.Base(r.URL.Path)]
 
 		color, exists := Colors[q.category]
 		if !exists {
@@ -208,6 +206,6 @@ func serveQuestion(questions *Questions, errorChannel chan<- error) httprouter.H
 }
 
 func registerQuestions(mux *httprouter.Router, questions *Questions, errorChannel chan<- error) {
-	mux.GET("/", serveNewQuestion(questions))
+	mux.GET("/", serveHome(questions))
 	mux.GET("/q/:id", serveQuestion(questions, errorChannel))
 }
