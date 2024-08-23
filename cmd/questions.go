@@ -16,6 +16,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -121,64 +122,104 @@ func generateNonce() (string, error) {
 	return base64.URLEncoding.EncodeToString(nonceBytes), nil
 }
 
+func loadFromFile(path string, list map[string]Trivia, errorChannel chan<- error) []string {
+	index := []string{}
+
+	f, err := os.Open(path)
+	if err != nil {
+		errorChannel <- err
+	}
+	defer func() {
+		err = f.Close()
+		if err != nil {
+			errorChannel <- err
+		}
+	}()
+
+	s := bufio.NewScanner(f)
+	b := make([]byte, 0, 64*1024)
+	s.Buffer(b, 1024*1024)
+	s.Split(bufio.ScanLines)
+
+	for s.Scan() {
+		line := s.Text()
+
+		if line == "" {
+			continue
+		}
+
+		var question, answer, category string
+
+		split := strings.Split(line, "|")
+
+		switch {
+		case len(split) == 2 || len(split) == 3 && split[2] == "":
+			question = split[0]
+			answer = split[1]
+			category = "Uncategorized"
+		case len(split) == 3:
+			question = split[0]
+			answer = split[1]
+			category = split[2]
+		default:
+			if verbose {
+				fmt.Printf("Invalid trivia entry: `%s`. Skipping.\n", line)
+			}
+
+			continue
+		}
+
+		t := Trivia{question, answer, category}
+
+		id := t.getId()
+
+		index = append(index, id)
+		list[id] = t
+	}
+
+	return index
+}
+
+func walkPath(path string, list map[string]Trivia, errorChannel chan<- error) []string {
+	index := []string{}
+
+	nodes, err := os.ReadDir(path)
+	if err != nil {
+		errorChannel <- err
+
+		return index
+	}
+
+	for _, node := range nodes {
+		fullPath := filepath.Join(path, node.Name())
+
+		switch {
+		case !node.IsDir() && filepath.Ext(node.Name()) == extension:
+			index = append(index, loadFromFile(fullPath, list, errorChannel)...)
+		case node.IsDir() && recursive:
+			index = append(index, walkPath(fullPath, list, errorChannel)...)
+		}
+	}
+
+	return index
+}
+
 func loadQuestions(questions *Questions, errorChannel chan<- error) int {
 	startTime := time.Now()
 
 	index := []string{}
 	list := map[string]Trivia{}
 
-	for i := 0; i < len(files); i++ {
-		f, err := os.Open(files[i])
-		if err != nil {
-			errorChannel <- err
+	switch {
+	case len(paths) > 0:
+		for i := 0; i < len(paths); i++ {
+			index = append(index, walkPath(paths[i], list, errorChannel)...)
 		}
-		defer func() {
-			err = f.Close()
-			if err != nil {
-				errorChannel <- err
-			}
-		}()
-
-		s := bufio.NewScanner(f)
-		b := make([]byte, 0, 64*1024)
-		s.Buffer(b, 1024*1024)
-		s.Split(bufio.ScanLines)
-
-		for s.Scan() {
-			line := s.Text()
-
-			if line == "" {
-				continue
-			}
-
-			var question, answer, category string
-
-			split := strings.Split(line, "|")
-
-			switch {
-			case len(split) == 2 || len(split) == 3 && split[2] == "":
-				question = split[0]
-				answer = split[1]
-				category = "Uncategorized"
-			case len(split) == 3:
-				question = split[0]
-				answer = split[1]
-				category = split[2]
-			default:
-				if verbose {
-					fmt.Printf("Invalid trivia entry: `%s`. Skipping.\n", line)
-				}
-
-				continue
-			}
-
-			t := Trivia{question, answer, category}
-
-			id := t.getId()
-
-			index = append(index, id)
-			list[id] = t
+	case len(files) > 0:
+		for i := 0; i < len(files); i++ {
+			index = append(index, loadFromFile(files[i], list, errorChannel)...)
 		}
+
 	}
 
 	questions.mu.Lock()
