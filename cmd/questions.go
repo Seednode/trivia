@@ -10,6 +10,7 @@ import (
 	random "crypto/rand"
 	"encoding/base64"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"html/template"
 	"math/rand/v2"
@@ -74,14 +75,18 @@ type Template struct {
 	Nonce    string
 }
 
-var Colors = map[string]string{
-	"Geography":         "#329cd8",
-	"Entertainment":     "#da6ab2",
-	"History":           "#e5cb3a",
-	"Arts & Literature": "#7a563c",
-	"Science & Nature":  "#157255",
-	"Sports & Leisure":  "#db6327",
-}
+var (
+	ErrInvalidFileCountValue = errors.New("no supported files found")
+
+	Colors = map[string]string{
+		"Geography":         "#329cd8",
+		"Entertainment":     "#da6ab2",
+		"History":           "#e5cb3a",
+		"Arts & Literature": "#7a563c",
+		"Science & Nature":  "#157255",
+		"Sports & Leisure":  "#db6327",
+	}
+)
 
 type Trivia struct {
 	question string
@@ -219,7 +224,13 @@ func loadQuestions(questions *Questions, errorChannel chan<- error) int {
 		for i := 0; i < len(files); i++ {
 			index = append(index, loadFromFile(files[i], list, errorChannel)...)
 		}
+	}
 
+	if len(index) < 1 || len(list) < 1 {
+		fmt.Printf("%s | No supported files found. Exiting.\n",
+			startTime.Format(logDate))
+
+		os.Exit(1)
 	}
 
 	questions.mu.Lock()
