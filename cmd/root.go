@@ -5,14 +5,13 @@ Copyright © 2024 Seednode <seednode@seedno.de>
 package cmd
 
 import (
-	"errors"
 	"log"
 
 	"github.com/spf13/cobra"
 )
 
 const (
-	ReleaseVersion string = "0.24.0"
+	ReleaseVersion string = "0.24.1"
 )
 
 var (
@@ -29,10 +28,6 @@ var (
 	reloadInterval string
 	verbose        bool
 	version        bool
-
-	ErrIncompatibleFlags = errors.New("--question-file and --question-path are mutually exclusive")
-
-	requiredArgs = []string{}
 
 	rootCmd = &cobra.Command{
 		Use:   "trivia",
@@ -70,8 +65,6 @@ func init() {
 	rootCmd.Flags().SetInterspersed(true)
 
 	rootCmd.CompletionOptions.HiddenDefaultCmd = true
-
-	rootCmd.MarkFlagsOneRequired(requiredArgs...)
 
 	rootCmd.SilenceErrors = true
 	rootCmd.SetHelpCommand(&cobra.Command{
