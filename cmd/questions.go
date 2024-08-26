@@ -168,13 +168,13 @@ func loadFromFile(path string, list map[string]Trivia, errorChannel chan<- error
 
 		switch {
 		case len(split) == 2 || len(split) == 3 && split[2] == "":
-			question = split[0]
-			answer = split[1]
+			question = strings.TrimSpace(split[0])
+			answer = strings.TrimSpace(split[1])
 			category = "Uncategorized"
 		case len(split) == 3:
-			question = split[0]
-			answer = split[1]
-			category = split[2]
+			question = strings.TrimSpace(split[0])
+			answer = strings.TrimSpace(split[1])
+			category = strings.TrimSpace(split[2])
 		default:
 			if verbose {
 				fmt.Printf("Invalid trivia entry: `%s`. Skipping.\n", line)
