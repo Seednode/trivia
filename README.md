@@ -46,7 +46,7 @@ Answer: 2024
 ```
 
 ## Reloading
-If the `--reload` flag is passed, an additional `/reload` endpoint is registered.
+If the `--reload` flag is passed, an additional `/reload` POST endpoint is registered.
 
 The trivia database can be live-reloaded from all files passed in the `-f|--question-file` flags by calling this endpoint.
 
