@@ -1,6 +1,6 @@
 :root {
-    --light: #c9d1d9;
-    --dark: #0d1117;
+    --foreground: #c9d1d9;
+    --background: #0d1117;
 }
 
 html, body, div, p, a, button {
@@ -13,6 +13,8 @@ html, body, div, p, a, button {
 }
 
 html {
+    background-color: var(--foreground);
+    color: var(--background);
     padding-top: 2rem;
     text-align: center;
     font-size: clamp(var(--min), var(--val), var(--max));
@@ -25,19 +27,12 @@ a {
     all: unset;
 }
 
-body {
-    color: var(--light);
-    background: var(--dark);
-}
-
 button {
     appearance: none;
-    background-color: #FAFBFC;
     border: 1px solid rgba(27, 31, 35, 0.15);
     border-radius: 4px;
     box-shadow: rgba(27, 31, 35, 0.04) 0 1px 0, rgba(255, 255, 255, 0.25) 0 1px 0 inset;
     box-sizing: border-box;
-    color: #24292E;
     cursor: pointer;
     display: inline-block;
     font-family: -apple-system, system-ui, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
@@ -53,45 +48,25 @@ button {
     vertical-align: middle;
     white-space: nowrap;
     word-wrap: break-word;
-  }
-  
-  button:hover {
-    background-color: #F3F4F6;
-    text-decoration: none;
-    transition-duration: 0.1s;
-  }
-  
-  button:disabled {
-    background-color: #FAFBFC;
-    border-color: rgba(27, 31, 35, 0.15);
-    color: #959DA5;
-    cursor: default;
-  }
-  
-  button:active {
-    background-color: #EDEFF2;
-    box-shadow: rgba(225, 228, 232, 0.2) 0 1px 0 inset;
-    transition: none 0s;
-  }
-  
-  button:focus {
-    outline: 1px transparent;
-  }
-  
-  button:before {
+}
+
+button:-webkit-details-marker {
     display: none;
-  }
-  
-  button:-webkit-details-marker {
-    display: none;
-  }
+}
 
 #hint {
-    font-size:.75em;
+    font-size: .75em;
+}
+
+#dark-mode {
+    font-size: .5em;
+    position: absolute;
+    top: .5em;
+    right: .5em;
 }
 
 .footer {
-    color: var(--dark);
+    color: var(--background);
     padding-top: 2rem;
     padding-bottom: 2rem;
     position: fixed;

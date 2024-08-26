@@ -39,6 +39,7 @@ const (
 	<title>Trivia v{{.Version}}</title>
     <link rel="stylesheet" href="/css/question.css" />
 	<style nonce="{{.Nonce}}">.footer {background-color:{{.Color}};}</style>
+	<script src="/js/darkMode.js"></script>
 	<script src="/js/toggleAnswer.js"></script>
     <link rel="apple-touch-icon" sizes="180x180" href="/favicons/apple-touch-icon.png">
 	<link rel="icon" type="image/png" sizes="32x32" href="/favicons/favicon-32x32.png">
@@ -56,8 +57,10 @@ const (
   </head>
 
   <body>
+    <p id="dark-mode">Toggle dark mode</p>
     <p id="hint">(Click on a question to load a new one)</p>
     <a href="/"><p id="question">{{.Question}}</p></a>
+	
 	<button id="toggle">Show Answer</button>
     <div id="answer"><p>{{.Answer}}</p></div>
     <div class="footer"><p>{{.Category}}</p></div>
