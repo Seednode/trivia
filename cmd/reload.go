@@ -76,5 +76,5 @@ func serveReload(questions *Questions, errorChannel chan<- error) httprouter.Han
 }
 
 func registerReload(mux *httprouter.Router, questions *Questions, errorChannel chan<- error) {
-	mux.GET("/reload", serveReload(questions, errorChannel))
+	mux.POST("/reload", serveReload(questions, errorChannel))
 }
