@@ -1,82 +1,62 @@
 :root {
-    --foreground: #c9d1d9;
     --background: #0d1117;
+    --foreground: #c9d1d9;
 }
 
 html, body, div, p, a, button {
+  border: 0;
+  font: inherit;
+  font-size: 100%;
   margin: 0;
   padding: 0;
-  border: 0;
-  font-size: 100%;
-  font: inherit;
   vertical-align: baseline;
 }
 
 html {
     background-color: var(--background);
     color: var(--foreground);
-    padding-top: 2rem;
-    text-align: center;
+    font-family: -apple-system, system-ui, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
     font-size: clamp(var(--min), var(--val), var(--max));
+    --max: 2.5em;
     --min: 1em;
     --val: 2.5vw;
-    --max: 2.5em;
+    padding-top: 2rem;
+    text-align: center;
+    touch-action: manipulation;
 }
 
 a {
     all: unset;
 }
 
-button {
-    appearance: none;
-    border: 1px solid rgba(27, 31, 35, 0.15);
-    border-radius: 4px;
-    box-shadow: rgba(27, 31, 35, 0.04) 0 1px 0, rgba(255, 255, 255, 0.25) 0 1px 0 inset;
-    box-sizing: border-box;
-    cursor: pointer;
-    display: inline-block;
-    font-family: -apple-system, system-ui, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
-    font-size: inherit;
-    font-weight: 500;
-    list-style: none;
-    padding: 6px 16px;
-    position: relative;
-    transition: background-color 0.2s cubic-bezier(0.3, 0, 0.5, 1);
-    user-select: none;
-    -webkit-user-select: none;
-    touch-action: manipulation;
-    vertical-align: middle;
-    white-space: nowrap;
-    word-wrap: break-word;
-}
-
-button:-webkit-details-marker {
-    display: none;
-}
-
 #hint {
     font-size: .75em;
+    user-select: none;
 }
 
 #dark-mode {
+    cursor: pointer;
     font-size: .5em;
     position: absolute;
-    top: .5em;
     right: .5em;
+    top: .5em;
+    user-select: none;
 }
 
 .footer {
-    color: var(--background);
+    bottom: 0;
+    color: #0d1117;
+    left: 0;
     padding-top: 2rem;
     padding-bottom: 2rem;
     position: fixed;
-    left: 0;
-    bottom: 0;
-    width: 100%;
     text-align: center;
+    user-select: none;
+    width: 100%;
 }
 
 #question {
+    cursor: pointer;
     line-height: 1.4;
     margin-left: auto;
     margin-right: auto;
@@ -95,4 +75,21 @@ button:-webkit-details-marker {
     padding: 50px 0;
     text-align: center;
     width: 100%;
+}
+
+#toggle { 
+    appearance: none;
+    border-radius: 4px;
+    box-sizing: border-box;
+    cursor: pointer;
+    display: inline-block;
+    font-size: inherit;
+    font-weight: 500;
+    padding: 6px 16px;
+    position: relative;
+    transition: background-color 0.2s cubic-bezier(0.3, 0, 0.5, 1);
+    user-select: none;
+    vertical-align: middle;
+    -webkit-user-select: none;
+    word-wrap: break-word;
 }
