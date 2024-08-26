@@ -13,8 +13,8 @@ html, body, div, p, a, button {
 }
 
 html {
-    background-color: var(--foreground);
-    color: var(--background);
+    background-color: var(--background);
+    color: var(--foreground);
     padding-top: 2rem;
     text-align: center;
     font-size: clamp(var(--min), var(--val), var(--max));

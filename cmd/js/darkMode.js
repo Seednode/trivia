@@ -1,6 +1,6 @@
-var r = document.querySelector(':root');
-
 if (localStorage.getItem('mode') === "light") {
+    var r = document.querySelector(':root');
+
     r.style.setProperty('--foreground', '#0d1117')
     r.style.setProperty('--background', '#c9d1d9')
 }
