@@ -40,4 +40,4 @@ EXPOSE 8080
 
 # run application
 ENTRYPOINT ["/trivia"]
-CMD ["--all","--verbose"]
+CMD ["--verbose"]
