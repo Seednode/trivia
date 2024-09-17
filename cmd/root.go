@@ -5,13 +5,16 @@ Copyright © 2024 Seednode <seednode@seedno.de>
 package cmd
 
 import (
-	"log"
+	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
 )
 
 const (
-	ReleaseVersion string = "0.27.0"
+	ReleaseVersion string = "0.28.0"
 )
 
 var (
@@ -28,26 +31,22 @@ var (
 	reloadInterval string
 	verbose        bool
 	version        bool
+)
 
-	rootCmd = &cobra.Command{
+func NewRootCommand() *cobra.Command {
+	rootCmd := &cobra.Command{
 		Use:   "trivia",
 		Short: "Serves a basic trivia web frontend.",
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			return initializeConfig(cmd)
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			err := servePage()
 
 			return err
 		},
 	}
-)
 
-func Execute() {
-	err := rootCmd.Execute()
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-func init() {
 	rootCmd.Flags().StringVarP(&bind, "bind", "b", "0.0.0.0", "address to bind to")
 	rootCmd.Flags().BoolVar(&exitOnError, "exit-on-error", false, "shut down webserver on error, instead of just printing the error")
 	rootCmd.Flags().BoolVar(&export, "export", false, "allow exporting of trivia database")
@@ -73,4 +72,45 @@ func init() {
 
 	rootCmd.SetVersionTemplate("trivia v{{.Version}}\n")
 	rootCmd.Version = ReleaseVersion
+
+	return rootCmd
+}
+
+func initializeConfig(cmd *cobra.Command) error {
+	v := viper.New()
+
+	v.SetConfigName("config")
+
+	v.SetConfigType("yaml")
+
+	v.AddConfigPath("/etc/trivia/")
+	v.AddConfigPath("$HOME/.config/trivia")
+	v.AddConfigPath(".")
+
+	if err := v.ReadInConfig(); err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+			return err
+		}
+	}
+
+	v.SetEnvPrefix("trivia")
+
+	v.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
+
+	v.AutomaticEnv()
+
+	bindFlags(cmd, v)
+
+	return nil
+}
+
+func bindFlags(cmd *cobra.Command, v *viper.Viper) {
+	cmd.Flags().VisitAll(func(f *pflag.Flag) {
+		configName := strings.ReplaceAll(f.Name, "-", "_")
+
+		if !f.Changed && v.IsSet(configName) {
+			val := v.Get(configName)
+			cmd.Flags().Set(f.Name, fmt.Sprintf("%v", val))
+		}
+	})
 }

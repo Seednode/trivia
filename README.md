@@ -12,6 +12,12 @@ Dockerfile available [here](https://raw.githubusercontent.com/Seednode/trivia/ma
 
 An example instance with most features enabled can be found [here](https://trivia.seedno.de/).
 
+### Configuration
+The following configuration methods are accepted, in order of highest to lowest priority:
+- Command-line flags
+- Environment variables
+- Config files
+
 ## File format
 The app expects newline-delimited text files in the following format (category is optional), with the file extension `.trivia` (configurable):
 ```
@@ -51,6 +57,34 @@ If the `--reload` flag is passed, an additional `/reload` POST endpoint is regis
 The trivia database can be live-reloaded from all files passed in the `-f|--question-file` flags by calling this endpoint.
 
 Scheduled index rebuilds can be enabled via the `--reload-interval <duration>` flag, which accepts [time.Duration](https://pkg.go.dev/time#ParseDuration) strings.
+
+### Config files
+Almost all options configurable via flags can also be configured via YAML files. Trivia looks for config files in the following paths:
+- `/etc/trivia/config.yaml`
+- `$HOME/.config/trivia/config.yaml`
+- `./config.yaml`
+
+All key names are case-insensitive, and a value of `true` can be used for boolean flags.
+
+For example, the file `~/.config/trivia/config.yaml` might contain the following lines:
+```
+BIND: 0.0.0.0
+PORT: 8080
+RELOAD_INTERVAL: 30m
+QUESTION_PATH: /home/sinc/trivia
+```
+
+### Environment variables
+Almost all options configurable via flags can also be configured via environment variables. 
+
+The associated environment variable is the prefix `TRIVIA_` plus the flag name, with the following changes:
+- Leading hyphens removed
+- Converted to upper-case
+- All internal hyphens converted to underscores
+
+For example:
+- `--question-path /home/sinc/trivia` becomes `TRIVIA_QUESTION_PATH=/home/sinc/trivia`
+- `--recursive` becomes `TRIVIA_RECURSIVE=true`.
 
 ## Usage output
 ```
