@@ -34,7 +34,7 @@ func registerReloadInterval(questions *Questions, quit <-chan struct{}, errorCha
 				next := time.Now().Add(interval).Truncate(time.Second)
 
 				if verbose {
-					fmt.Printf("%s | Started scheduled index rebuild\n", time.Now().Format(logDate))
+					fmt.Printf("%s | Started scheduled rebuild\n", time.Now().Format(logDate))
 				}
 
 				loadQuestions(questions, errorChannel)
