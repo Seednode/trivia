@@ -6,8 +6,8 @@ package cmd
 
 import (
 	"bufio"
-	"crypto/md5"
 	random "crypto/rand"
+	"crypto/sha1"
 	"encoding/base64"
 	"encoding/hex"
 	"errors"
@@ -104,11 +104,11 @@ type Trivia struct {
 }
 
 func (t *Trivia) getId() string {
-	md5hash := md5.New()
-	md5hash.Write([]byte(t.question + t.answer + t.category))
-	md5string := hex.EncodeToString(md5hash.Sum(nil))
+	sha1hash := sha1.New()
+	sha1hash.Write([]byte(t.question + t.answer + t.category))
+	sha1string := hex.EncodeToString(sha1hash.Sum(nil))
 
-	return uuid.NewMD5(uuid.NameSpaceURL, []byte(md5string)).String()
+	return uuid.NewSHA1(uuid.NameSpaceURL, []byte(sha1string)).String()
 }
 
 type Questions struct {
