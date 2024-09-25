@@ -90,9 +90,9 @@ func servePage() error {
 	srv := &http.Server{
 		Addr:         net.JoinHostPort(bind, strconv.Itoa(int(port))),
 		Handler:      mux,
-		IdleTimeout:  10 * time.Minute,
+		IdleTimeout:  1 * time.Minute,
 		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 5 * time.Minute,
+		WriteTimeout: 5 * time.Second,
 	}
 
 	errorChannel := make(chan error)

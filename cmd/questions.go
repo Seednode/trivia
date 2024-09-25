@@ -31,13 +31,13 @@ const (
 
 	tpl = `
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-US">
   <head>
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-	<meta name="Description" content="A very basic trivia webapp." />
-    <meta charset="utf-8" />
+	<meta name="Description" content="A very basic trivia webapp.">
 	<title>Trivia v{{.Version}}</title>
-    <link rel="stylesheet" href="/css/question.css" />
+    <link rel="stylesheet" href="/css/question.css">
 	<style nonce="{{.Nonce}}">.footer {background-color:{{.Color}};}</style>
 	<script src="/js/darkMode.js"></script>
 	<script src="/js/toggleAnswer.js"></script>
@@ -48,12 +48,12 @@ const (
 	<link rel="mask-icon" href="/favicons/safari-pinned-tab.svg" color="#5bbad5">
 	<meta name="msapplication-TileColor" content="#da532c">
 	<meta name="theme-color" content="#ffffff">
-    <meta property="og:site_name" content="https://github.com/Seednode/trivia"/>
-    <meta property="og:title" content="Trivia v{{.Version}}"/>
-    <meta property="og:description" content="A very basic trivia webapp."/>
-    <meta property="og:url" content="https://github.com/Seednode/trivia"/>
-    <meta property="og:type" content="website"/>
-    <meta property="og:image" content="https://raw.githubusercontent.com/Seednode/trivia/master/cmd/favicons/apple-touch-icon.png"/>
+    <meta property="og:site_name" content="https://github.com/Seednode/trivia">
+    <meta property="og:title" content="Trivia v{{.Version}}">
+    <meta property="og:description" content="A very basic trivia webapp.">
+    <meta property="og:url" content="https://github.com/Seednode/trivia">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="/favicons/apple-touch-icon.png">
   </head>
 
   <body>
