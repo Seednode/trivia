@@ -15,7 +15,7 @@ ARG TARGETOS TARGETARCH
 RUN CGO_ENABLED=0 \
     GOOS=$TARGETOS \
     GOARCH=$TARGETARCH \
-    go build -trimpath -tags timetzdata -o $app \
+    go build -a -trimpath -tags timetzdata -o $app \
     && chmod 500 $app
 
 # set up final stage
