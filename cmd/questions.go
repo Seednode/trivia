@@ -98,14 +98,14 @@ var (
 )
 
 type Trivia struct {
-	question string
-	answer   string
-	category string
+	Question string
+	Answer   string
+	Category string
 }
 
 func (t *Trivia) getId() string {
 	sha1hash := sha1.New()
-	sha1hash.Write([]byte(t.question + t.answer + t.category))
+	sha1hash.Write([]byte(t.Question + t.Answer + t.Category))
 	sha1string := hex.EncodeToString(sha1hash.Sum(nil))
 
 	return uuid.NewSHA1(uuid.NameSpaceURL, []byte(sha1string)).String()
@@ -304,16 +304,16 @@ func serveQuestion(questions *Questions, template *template.Template, errorChann
 
 		q := questions.getTrivia(path.Base(r.URL.Path))
 
-		color, exists := Colors[q.category]
+		color, exists := Colors[q.Category]
 		if !exists {
 			color = "lightblue"
 		}
 
 		data := Template{
 			Version:  ReleaseVersion,
-			Question: q.question,
-			Answer:   q.answer,
-			Category: q.category,
+			Question: q.Question,
+			Answer:   q.Answer,
+			Category: q.Category,
 			Color:    color,
 			Nonce:    nonce,
 		}
