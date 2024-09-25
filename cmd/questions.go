@@ -126,6 +126,14 @@ func (q *Questions) getRandomId() string {
 	return id
 }
 
+func (q *Questions) getTrivia(path string) *Trivia {
+	q.mu.RLock()
+	t := q.list[path]
+	q.mu.RUnlock()
+
+	return &t
+}
+
 func generateNonce() (string, error) {
 	nonceBytes := make([]byte, 32)
 	_, err := random.Read(nonceBytes)
@@ -292,7 +300,7 @@ func serveQuestion(questions *Questions, template *template.Template, errorChann
 				r.RequestURI)
 		}
 
-		q := questions.list[path.Base(r.URL.Path)]
+		q := questions.getTrivia(path.Base(r.URL.Path))
 
 		color, exists := Colors[q.category]
 		if !exists {
