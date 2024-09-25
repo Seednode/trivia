@@ -289,6 +289,8 @@ func serveQuestion(questions *Questions, template *template.Template, errorChann
 		nonce, err := generateNonce()
 		if err != nil {
 			errorChannel <- err
+
+			return
 		}
 
 		w.Header().Set("Content-Security-Policy", fmt.Sprintf("default-src 'self' 'nonce-%s'", nonce))
