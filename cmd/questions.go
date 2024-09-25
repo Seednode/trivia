@@ -224,20 +224,20 @@ func loadQuestions(questions *Questions, errorChannel chan<- error) int {
 	index := []string{}
 	list := map[string]Trivia{}
 
-	switch {
-	case len(paths) > 0:
+	if len(paths) > 0 {
 		for i := 0; i < len(paths); i++ {
 			index = append(index, walkPath(paths[i], list, errorChannel)...)
 		}
-	case len(files) > 0:
+	}
+
+	if len(files) > 0 {
 		for i := 0; i < len(files); i++ {
 			index = append(index, loadFromFile(files[i], list, errorChannel)...)
 		}
 	}
 
 	if len(index) < 1 || len(list) < 1 {
-		fmt.Printf("%s | No supported files found. Exiting.\n",
-			startTime.Format(logDate))
+		fmt.Printf("%s | No supported files found. Exiting.\n", startTime.Format(logDate))
 
 		os.Exit(1)
 	}
