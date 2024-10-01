@@ -33,10 +33,6 @@ How many inches are in a foot?|12|Measurement
 Is mayonnaise an instrument?|No, Patrick, mayonnaise is not an instrument|Cartoons
 ```
 
-You can specify as many input files as you'd like, by repeating the `-f|--question-file` flag.
-
-You can also specify input directories, optionally `--recursive`, from which trivia files will be loaded.
-
 ## Exporting
 If the `--export` flag is passed, an additional `/export` endpoint is registered.
 
@@ -53,9 +49,27 @@ Answer: 2024
 ## Reloading
 If the `--reload` flag is passed, an additional `/reload` POST endpoint is registered.
 
-The trivia database can be live-reloaded from all files passed in the `-f|--question-file` flags by calling this endpoint.
+The trivia database can be live-reloaded by calling this endpoint.
 
 Scheduled index rebuilds can be enabled via the `--reload-interval <duration>` flag, which accepts [time.Duration](https://pkg.go.dev/time#ParseDuration) strings.
+
+### Colors
+A file containing custom hex color mappings for categories can be specified via the `-c|--colors` flag. 
+
+The app expects the following format:
+```
+Entertainment|#da6ab2
+History|#e5cb3a
+Arts & Literature|#7a563c
+Science & Nature|#157255
+Sports & Leisure|#db6327
+Global View|#6d6b82
+Sound & Screen|#a04251
+News|#b37e00
+The Written Word|#7a4e34
+Innovations|#4f7144
+Game Time|#a66231
+```
 
 ### Environment variables
 Almost all options configurable via flags can also be configured via environment variables. 
@@ -66,7 +80,7 @@ The associated environment variable is the prefix `TRIVIA_` plus the flag name, 
 - All internal hyphens converted to underscores
 
 For example:
-- `--question-path /home/sinc/trivia` becomes `TRIVIA_QUESTION_PATH=/home/sinc/trivia`
+- `--colors /home/sinc/trivia/colors.txt` becomes `TRIVIA_COLORS=/home/sinc/trivia/colors.txt`
 - `--recursive` becomes `TRIVIA_RECURSIVE=true`.
 
 ## Usage output
