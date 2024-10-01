@@ -171,8 +171,6 @@ func loadColors(path string, errorChannel chan<- error) map[string]string {
 			continue
 		}
 
-		var category, color string
-
 		split := strings.Split(line, "|")
 
 		if len(split) != 2 {
@@ -183,10 +181,7 @@ func loadColors(path string, errorChannel chan<- error) map[string]string {
 			return colors
 		}
 
-		category = strings.TrimSpace(split[0])
-		color = strings.TrimSpace(split[1])
-
-		colors[category] = color
+		colors[strings.TrimSpace(split[0])] = strings.TrimSpace(split[1])
 	}
 
 	if verbose {
@@ -298,12 +293,10 @@ func loadQuestions(paths []string, questions *Questions, errorChannel chan<- err
 	length := len(questions.list)
 	questions.mu.Unlock()
 
-	if verbose {
-		fmt.Printf("%s | Loaded %d questions in %s\n",
-			startTime.Format(logDate),
-			length,
-			time.Since(startTime))
-	}
+	fmt.Printf("%s | Loaded %d questions in %s\n",
+		startTime.Format(logDate),
+		length,
+		time.Since(startTime))
 
 	return length
 }

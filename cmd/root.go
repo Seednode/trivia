@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	ReleaseVersion string = "2.0.0"
+	ReleaseVersion string = "2.1.0"
 )
 
 var (
@@ -54,7 +54,7 @@ func NewRootCommand() *cobra.Command {
 	rootCmd.Flags().BoolVar(&profile, "profile", false, "register net/http/pprof handlers")
 	rootCmd.Flags().BoolVar(&reload, "reload", false, "allow live-reload of questions")
 	rootCmd.Flags().StringVar(&reloadInterval, "reload-interval", "", "interval at which to rebuild question list (e.g. \"5m\" or \"1h\")")
-	rootCmd.Flags().BoolVar(&recursive, "recursive", false, "recurse into directories")
+	rootCmd.Flags().BoolVarP(&recursive, "recursive", "r", false, "recurse into directories")
 	rootCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "log requests to stdout")
 	rootCmd.Flags().BoolVarP(&version, "version", "V", false, "display version and exit")
 

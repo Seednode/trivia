@@ -72,11 +72,9 @@ func servePage(args []string) error {
 		}
 	}
 
-	if verbose {
-		fmt.Printf("%s | trivia v%s\n",
-			time.Now().Format(logDate),
-			ReleaseVersion)
-	}
+	fmt.Printf("%s | trivia v%s\n",
+		time.Now().Format(logDate),
+		ReleaseVersion)
 
 	paths, err := validatePaths(args)
 	if err != nil {
@@ -153,11 +151,9 @@ func servePage(args []string) error {
 
 	mux.GET("/version", serveVersion(errorChannel))
 
-	if verbose {
-		fmt.Printf("%s | Listening on http://%s/\n",
-			time.Now().Format(logDate),
-			srv.Addr)
-	}
+	fmt.Printf("%s | Listening on http://%s/\n",
+		time.Now().Format(logDate),
+		srv.Addr)
 
 	err = srv.ListenAndServe()
 
