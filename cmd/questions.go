@@ -119,8 +119,7 @@ type Questions struct {
 
 func (q *Questions) getRandomId() string {
 	q.mu.RLock()
-	n := rand.IntN(len(q.index))
-	id := q.index[n]
+	id := q.index[rand.IntN(len(q.index))]
 	q.mu.RUnlock()
 
 	return id
@@ -135,13 +134,13 @@ func (q *Questions) getTrivia(path string) *Trivia {
 }
 
 func generateNonce() (string, error) {
-	nonceBytes := make([]byte, 32)
-	_, err := random.Read(nonceBytes)
+	n := make([]byte, 32)
+	_, err := random.Read(n)
 	if err != nil {
 		return "", fmt.Errorf("could not generate nonce")
 	}
 
-	return base64.URLEncoding.EncodeToString(nonceBytes), nil
+	return base64.URLEncoding.EncodeToString(n), nil
 }
 
 func loadFromFile(path string, list map[string]Trivia, errorChannel chan<- error) []string {
@@ -268,12 +267,10 @@ func loadQuestions(questions *Questions, errorChannel chan<- error) int {
 
 func serveHome(questions *Questions) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-		q := questions.getRandomId()
-
 		newUrl := fmt.Sprintf("%s//%s/q/%s",
 			r.URL.Scheme,
 			r.Host,
-			q,
+			questions.getRandomId(),
 		)
 
 		http.Redirect(w, r, newUrl, redirectStatusCode)
