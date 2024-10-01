@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	ReleaseVersion string = "2.1.1"
+	ReleaseVersion string = "2.2.0"
 )
 
 var (
@@ -23,6 +23,7 @@ var (
 	exitOnError    bool
 	export         bool
 	extension      string
+	html           bool
 	port           uint16
 	profile        bool
 	recursive      bool
@@ -50,6 +51,7 @@ func NewRootCommand() *cobra.Command {
 	rootCmd.Flags().BoolVar(&exitOnError, "exit-on-error", false, "shut down webserver on error, instead of just printing the error")
 	rootCmd.Flags().BoolVar(&export, "export", false, "allow exporting of trivia database")
 	rootCmd.Flags().StringVar(&extension, "extension", ".trivia", "only process files ending in this extension")
+	rootCmd.Flags().BoolVar(&html, "html", false, "allow arbitrary html tags in input")
 	rootCmd.Flags().Uint16VarP(&port, "port", "p", 8080, "port to listen on")
 	rootCmd.Flags().BoolVar(&profile, "profile", false, "register net/http/pprof handlers")
 	rootCmd.Flags().BoolVar(&reload, "reload", false, "allow live-reload of questions")

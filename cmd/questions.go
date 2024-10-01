@@ -27,15 +27,6 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-type Template struct {
-	Version  string
-	Question string
-	Answer   string
-	Category string
-	Color    string
-	Nonce    string
-}
-
 type Trivia struct {
 	Question string
 	Answer   string
@@ -376,7 +367,7 @@ func serveHome(questions *Questions) httprouter.Handle {
 	}
 }
 
-func serveQuestion(questions *Questions, colors map[string]string, template *template.Template, errorChannel chan<- error) httprouter.Handle {
+func serveQuestion(questions *Questions, colors map[string]string, tpl *template.Template, errorChannel chan<- error) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 		startTime := time.Now()
 
@@ -405,20 +396,41 @@ func serveQuestion(questions *Questions, colors map[string]string, template *tem
 			color = "lightblue"
 		}
 
-		data := Template{
-			Version:  ReleaseVersion,
-			Question: q.Question,
-			Answer:   q.Answer,
-			Category: q.Category,
-			Color:    color,
-			Nonce:    nonce,
+		if html {
+			err = tpl.Execute(w, struct {
+				Version  string
+				Question template.HTML
+				Answer   template.HTML
+				Category string
+				Color    string
+				Nonce    string
+			}{
+				Version:  ReleaseVersion,
+				Question: template.HTML(q.Question),
+				Answer:   template.HTML(q.Answer),
+				Category: q.Category,
+				Color:    color,
+				Nonce:    nonce,
+			})
+		} else {
+			err = tpl.Execute(w, struct {
+				Version  string
+				Question string
+				Answer   string
+				Category string
+				Color    string
+				Nonce    string
+			}{
+				Version:  ReleaseVersion,
+				Question: q.Question,
+				Answer:   q.Answer,
+				Category: q.Category,
+				Color:    color,
+				Nonce:    nonce,
+			})
 		}
-
-		err = template.Execute(w, data)
 		if err != nil {
 			errorChannel <- err
-
-			return
 		}
 	}
 }
