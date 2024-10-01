@@ -1,6 +1,9 @@
 :root {
-    --background: #222222;
-    --foreground: #dee4e7;
+    --background: #002b36;
+    --highlight: #073642;
+    --comment: #586e75;
+    --content: #839496;
+    --emphasis: #93a1a1;
 }
 
 html, body, div, p, a, button {
@@ -30,6 +33,7 @@ a {
 }
 
 #hint {
+    color: var(--emphasis);
     font-size: .75em;
     user-select: none;
 }
@@ -45,7 +49,7 @@ a {
 
 .footer {
     bottom: 0;
-    color: #222222;
+    color: var(--background);
     left: 0;
     padding-top: 2rem;
     padding-bottom: 2rem;
