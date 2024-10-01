@@ -31,6 +31,7 @@ For example:
 What is the current year?|2024|History
 How many inches are in a foot?|12|Measurement
 Is mayonnaise an instrument?|No, Patrick, mayonnaise is not an instrument|Cartoons
+[...]
 ```
 
 If the `--html` flag is passed, HTML can be used for formatting trivia questions:
@@ -38,6 +39,7 @@ If the `--html` flag is passed, HTML can be used for formatting trivia questions
 What is the <u>current</u> year?|2024|History
 How many inches are in a foot?|12|Measurement
 Is mayonnaise an instrument?|No, <em>Patrick</em>, mayonnaise is not an instrument|Cartoons
+[...]
 ```
 
 ## Exporting
@@ -76,6 +78,7 @@ News|#b37e00
 The Written Word|#7a4e34
 Innovations|#4f7144
 Game Time|#a66231
+[...]
 ```
 
 ### Environment variables
