@@ -33,6 +33,13 @@ How many inches are in a foot?|12|Measurement
 Is mayonnaise an instrument?|No, Patrick, mayonnaise is not an instrument|Cartoons
 ```
 
+If the `--html` flag is passed, HTML can be used for formatting trivia questions:
+```
+What is the <u>current</u> year?|2024|History
+How many inches are in a foot?|12|Measurement
+Is mayonnaise an instrument?|No, <em>Patrick</em>, mayonnaise is not an instrument|Cartoons
+```
+
 ## Exporting
 If the `--export` flag is passed, an additional `/export` endpoint is registered.
 
@@ -97,9 +104,10 @@ Flags:
       --export                   allow exporting of trivia database
       --extension string         only process files ending in this extension (default ".trivia")
   -h, --help                     help for trivia
+      --html                     allow arbitrary html tags in input
   -p, --port uint16              port to listen on (default 8080)
       --profile                  register net/http/pprof handlers
-      --recursive                recurse into directories
+  -r, --recursive                recurse into directories
       --reload                   allow live-reload of questions
       --reload-interval string   interval at which to rebuild question list (e.g. "5m" or "1h")
   -v, --verbose                  log requests to stdout
