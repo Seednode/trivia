@@ -33,7 +33,7 @@ a {
 }
 
 #hint {
-    color: var(--emphasis);
+    color: var(--comment);
     font-size: .75em;
     user-select: none;
 }
@@ -51,8 +51,8 @@ a {
     bottom: 0;
     color: var(--background);
     left: 0;
-    padding-top: 2rem;
-    padding-bottom: 2rem;
+    padding-top: 1.5rem;
+    padding-bottom: 1.5rem;
     position: fixed;
     text-align: center;
     user-select: none;
