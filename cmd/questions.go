@@ -17,18 +17,63 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/julienschmidt/httprouter"
 )
 
-const (
-	redirectStatusCode int = http.StatusSeeOther
+type Template struct {
+	Version  string
+	Question string
+	Answer   string
+	Category string
+	Color    string
+	Nonce    string
+}
 
-	tpl = `
+type Trivia struct {
+	Question string
+	Answer   string
+	Category string
+}
+
+func (t *Trivia) getId() string {
+	sha1hash := sha1.New()
+	sha1hash.Write([]byte(t.Question + t.Answer + t.Category))
+	sha1string := hex.EncodeToString(sha1hash.Sum(nil))
+
+	return uuid.NewSHA1(uuid.NameSpaceURL, []byte(sha1string)).String()
+}
+
+type Questions struct {
+	mu    sync.RWMutex
+	index []string
+	list  map[string]Trivia
+}
+
+func (q *Questions) getRandomId() string {
+	q.mu.RLock()
+	id := q.index[rand.IntN(len(q.index))]
+	q.mu.RUnlock()
+
+	return id
+}
+
+func (q *Questions) getTrivia(path string) *Trivia {
+	q.mu.RLock()
+	t := q.list[path]
+	q.mu.RUnlock()
+
+	return &t
+}
+
+func getTemplate() string {
+	return `
 <!DOCTYPE html>
 <html lang="en-US">
   <head>
@@ -66,55 +111,6 @@ const (
   </body>
 </html>
 `
-)
-
-type Template struct {
-	Version  string
-	Question string
-	Answer   string
-	Category string
-	Color    string
-	Nonce    string
-}
-
-var (
-	ErrInvalidFileCountValue = errors.New("no supported files found")
-)
-
-type Trivia struct {
-	Question string
-	Answer   string
-	Category string
-}
-
-func (t *Trivia) getId() string {
-	sha1hash := sha1.New()
-	sha1hash.Write([]byte(t.Question + t.Answer + t.Category))
-	sha1string := hex.EncodeToString(sha1hash.Sum(nil))
-
-	return uuid.NewSHA1(uuid.NameSpaceURL, []byte(sha1string)).String()
-}
-
-type Questions struct {
-	mu    sync.RWMutex
-	index []string
-	list  map[string]Trivia
-}
-
-func (q *Questions) getRandomId() string {
-	q.mu.RLock()
-	id := q.index[rand.IntN(len(q.index))]
-	q.mu.RUnlock()
-
-	return id
-}
-
-func (q *Questions) getTrivia(path string) *Trivia {
-	q.mu.RLock()
-	t := q.list[path]
-	q.mu.RUnlock()
-
-	return &t
 }
 
 func generateNonce() (string, error) {
@@ -192,6 +188,73 @@ func loadColors(path string, errorChannel chan<- error) map[string]string {
 	}
 
 	return colors
+}
+
+func normalizePath(path string) (string, error) {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+
+	if path == "~" {
+		path = homeDir
+	} else if strings.HasPrefix(path, "~/") {
+		path = filepath.Join(homeDir, path[2:])
+	}
+
+	path, err = filepath.EvalSymlinks(path)
+	if err != nil {
+		return "", err
+	}
+
+	absolutePath, err := filepath.Abs(path)
+	if err != nil {
+		return "", err
+	}
+
+	return absolutePath, nil
+}
+
+func validatePaths(args []string) ([]string, error) {
+	var paths []string
+
+	for i := 0; i < len(args); i++ {
+		path, err := normalizePath(args[i])
+		if err != nil {
+			return nil, err
+		}
+
+		paths = append(paths, path)
+	}
+
+	return paths, nil
+}
+
+func walkPath(path string, list map[string]Trivia, errorChannel chan<- error) []string {
+	index := []string{}
+
+	nodes, err := os.ReadDir(path)
+	switch {
+	case errors.Is(err, syscall.ENOTDIR):
+		if filepath.Ext(path) == extension {
+			index = append(index, loadFromFile(path, list, errorChannel)...)
+		}
+	case err != nil:
+		errorChannel <- err
+	default:
+		for _, node := range nodes {
+			fullPath := filepath.Join(path, node.Name())
+
+			switch {
+			case !node.IsDir() && filepath.Ext(node.Name()) == extension:
+				index = append(index, loadFromFile(fullPath, list, errorChannel)...)
+			case node.IsDir() && recursive:
+				index = append(index, walkPath(fullPath, list, errorChannel)...)
+			}
+		}
+	}
+
+	return index
 }
 
 func loadFromFile(path string, list map[string]Trivia, errorChannel chan<- error) []string {
@@ -309,7 +372,7 @@ func serveHome(questions *Questions) httprouter.Handle {
 			questions.getRandomId(),
 		)
 
-		http.Redirect(w, r, newUrl, redirectStatusCode)
+		http.Redirect(w, r, newUrl, http.StatusSeeOther)
 	}
 }
 
@@ -361,7 +424,7 @@ func serveQuestion(questions *Questions, colors map[string]string, template *tem
 }
 
 func registerQuestions(mux *httprouter.Router, colors map[string]string, questions *Questions, errorChannel chan<- error) {
-	template, err := template.New("question").Parse(tpl)
+	template, err := template.New("question").Parse(getTemplate())
 	if err != nil {
 		errorChannel <- err
 
