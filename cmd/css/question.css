@@ -17,7 +17,7 @@ html, body, div, p, a, button {
 
 html {
     background-color: var(--background);
-    color: var(--foreground);
+    color: var(--content);
     font-family: -apple-system, system-ui, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
     font-size: clamp(var(--min), var(--val), var(--max));
     --max: 2.5em;
@@ -83,8 +83,10 @@ a {
 
 #toggle { 
     appearance: none;
+    background-color: var(--emphasis);
     border-radius: 4px;
     box-sizing: border-box;
+    color: var(--highlight);
     cursor: pointer;
     display: inline-block;
     font-size: inherit;
