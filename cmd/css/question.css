@@ -1,6 +1,6 @@
 :root {
-    --background: #0d1117;
-    --foreground: #c9d1d9;
+    --background: #222222;
+    --foreground: #dee4e7;
 }
 
 html, body, div, p, a, button {
@@ -45,7 +45,7 @@ a {
 
 .footer {
     bottom: 0;
-    color: #0d1117;
+    color: #222222;
     left: 0;
     padding-top: 2rem;
     padding-bottom: 2rem;
