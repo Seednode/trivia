@@ -61,7 +61,7 @@ func serverErrorHandler() func(http.ResponseWriter, *http.Request, interface{}) 
 	return serverError
 }
 
-func servePage() error {
+func servePage(args []string) error {
 	timeZone := os.Getenv("TZ")
 	if timeZone != "" {
 		var err error
@@ -76,6 +76,11 @@ func servePage() error {
 		fmt.Printf("%s | trivia v%s\n",
 			time.Now().Format(logDate),
 			ReleaseVersion)
+	}
+
+	paths, err := validatePaths(args)
+	if err != nil {
+		return err
 	}
 
 	bindAddr := net.ParseIP(bind)
@@ -115,7 +120,7 @@ func servePage() error {
 		list:  map[string]Trivia{},
 	}
 
-	loadQuestions(questions, errorChannel)
+	loadQuestions(paths, questions, errorChannel)
 
 	registerFavicons(mux, errorChannel)
 
@@ -132,17 +137,19 @@ func servePage() error {
 	}
 
 	if reload {
-		registerReload(mux, questions, errorChannel)
+		registerReload(mux, paths, questions, errorChannel)
 	}
 
 	if reloadInterval != "" {
 		quit := make(chan struct{})
 		defer close(quit)
 
-		registerReloadInterval(questions, quit, errorChannel)
+		registerReloadInterval(paths, questions, quit, errorChannel)
 	}
 
-	registerQuestions(mux, questions, errorChannel)
+	colors := loadColors(colorsFile, errorChannel)
+
+	registerQuestions(mux, colors, questions, errorChannel)
 
 	mux.GET("/version", serveVersion(errorChannel))
 
@@ -152,7 +159,7 @@ func servePage() error {
 			srv.Addr)
 	}
 
-	err := srv.ListenAndServe()
+	err = srv.ListenAndServe()
 
 	return err
 }

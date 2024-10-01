@@ -14,16 +14,15 @@ import (
 )
 
 const (
-	ReleaseVersion string = "1.1.6"
+	ReleaseVersion string = "2.0.0"
 )
 
 var (
 	bind           string
+	colorsFile     string
 	exitOnError    bool
 	export         bool
 	extension      string
-	files          []string
-	paths          []string
 	port           uint16
 	profile        bool
 	recursive      bool
@@ -37,15 +36,17 @@ func NewRootCommand() *cobra.Command {
 	rootCmd := &cobra.Command{
 		Use:   "trivia",
 		Short: "Serves a basic trivia web frontend.",
+		Args:  cobra.MinimumNArgs(1),
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			initializeConfig(cmd)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return servePage()
+			return servePage(args)
 		},
 	}
 
 	rootCmd.Flags().StringVarP(&bind, "bind", "b", "0.0.0.0", "address to bind to")
+	rootCmd.Flags().StringVarP(&colorsFile, "colors", "c", "", "file from which to load color schemes")
 	rootCmd.Flags().BoolVar(&exitOnError, "exit-on-error", false, "shut down webserver on error, instead of just printing the error")
 	rootCmd.Flags().BoolVar(&export, "export", false, "allow exporting of trivia database")
 	rootCmd.Flags().StringVar(&extension, "extension", ".trivia", "only process files ending in this extension")
@@ -53,9 +54,7 @@ func NewRootCommand() *cobra.Command {
 	rootCmd.Flags().BoolVar(&profile, "profile", false, "register net/http/pprof handlers")
 	rootCmd.Flags().BoolVar(&reload, "reload", false, "allow live-reload of questions")
 	rootCmd.Flags().StringVar(&reloadInterval, "reload-interval", "", "interval at which to rebuild question list (e.g. \"5m\" or \"1h\")")
-	rootCmd.Flags().StringSliceVarP(&files, "question-file", "f", []string{}, "path to file containing trivia questions (can be supplied multiple times)")
-	rootCmd.Flags().StringSliceVar(&paths, "question-path", []string{}, "path containing trivia question files (can be supplied multiple times)")
-	rootCmd.Flags().BoolVar(&recursive, "recursive", false, "recurse into directories when supplying --question-path")
+	rootCmd.Flags().BoolVar(&recursive, "recursive", false, "recurse into directories")
 	rootCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "log requests to stdout")
 	rootCmd.Flags().BoolVarP(&version, "version", "V", false, "display version and exit")
 

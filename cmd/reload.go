@@ -12,7 +12,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-func registerReloadInterval(questions *Questions, quit <-chan struct{}, errorChannel chan<- error) {
+func registerReloadInterval(paths []string, questions *Questions, quit <-chan struct{}, errorChannel chan<- error) {
 	interval, err := time.ParseDuration(reloadInterval)
 	if err != nil {
 		errorChannel <- err
@@ -37,7 +37,7 @@ func registerReloadInterval(questions *Questions, quit <-chan struct{}, errorCha
 					fmt.Printf("%s | Started scheduled rebuild\n", time.Now().Format(logDate))
 				}
 
-				loadQuestions(questions, errorChannel)
+				loadQuestions(paths, questions, errorChannel)
 
 				if verbose {
 					fmt.Printf("%s | Next scheduled rebuild will run at %s\n", time.Now().Format(logDate), next.Format(logDate))
@@ -51,7 +51,7 @@ func registerReloadInterval(questions *Questions, quit <-chan struct{}, errorCha
 	}()
 }
 
-func serveReload(questions *Questions, errorChannel chan<- error) httprouter.Handle {
+func serveReload(paths []string, questions *Questions, errorChannel chan<- error) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 		startTime := time.Now()
 
@@ -64,7 +64,7 @@ func serveReload(questions *Questions, errorChannel chan<- error) httprouter.Han
 				r.RequestURI)
 		}
 
-		count := loadQuestions(questions, errorChannel)
+		count := loadQuestions(paths, questions, errorChannel)
 
 		_, err := w.Write([]byte(fmt.Sprintf("Loaded %d questions in %s.\n", count, time.Since(startTime))))
 		if err != nil {
@@ -75,6 +75,6 @@ func serveReload(questions *Questions, errorChannel chan<- error) httprouter.Han
 	}
 }
 
-func registerReload(mux *httprouter.Router, questions *Questions, errorChannel chan<- error) {
-	mux.POST("/reload", serveReload(questions, errorChannel))
+func registerReload(mux *httprouter.Router, paths []string, questions *Questions, errorChannel chan<- error) {
+	mux.POST("/reload", serveReload(paths, questions, errorChannel))
 }

@@ -17,7 +17,6 @@ import (
 	"net/http"
 	"os"
 	"path"
-	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -80,21 +79,6 @@ type Template struct {
 
 var (
 	ErrInvalidFileCountValue = errors.New("no supported files found")
-
-	Colors = map[string]string{
-		"Geography":         " ",
-		"Entertainment":     "#da6ab2",
-		"History":           "#e5cb3a",
-		"Arts & Literature": "#7a563c",
-		"Science & Nature":  "#157255",
-		"Sports & Leisure":  "#db6327",
-		"Global View":       "#6d6b82",
-		"Sound & Screen":    "#a04251",
-		"News":              "#b37e00",
-		"The Written Word":  "#7a4e34",
-		"Innovations":       "#4f7144",
-		"Game Time":         "#a66231",
-	}
 )
 
 type Trivia struct {
@@ -143,8 +127,26 @@ func generateNonce() (string, error) {
 	return base64.URLEncoding.EncodeToString(n), nil
 }
 
-func loadFromFile(path string, list map[string]Trivia, errorChannel chan<- error) []string {
-	index := []string{}
+func loadColors(path string, errorChannel chan<- error) map[string]string {
+	if colorsFile == "" {
+		return map[string]string{
+			"Entertainment":     "#da6ab2",
+			"History":           "#e5cb3a",
+			"Arts & Literature": "#7a563c",
+			"Science & Nature":  "#157255",
+			"Sports & Leisure":  "#db6327",
+			"Global View":       "#6d6b82",
+			"Sound & Screen":    "#a04251",
+			"News":              "#b37e00",
+			"The Written Word":  "#7a4e34",
+			"Innovations":       "#4f7144",
+			"Game Time":         "#a66231",
+		}
+	}
+
+	startTime := time.Now()
+
+	colors := map[string]string{}
 
 	f, err := os.Open(path)
 	if err != nil {
@@ -169,6 +171,64 @@ func loadFromFile(path string, list map[string]Trivia, errorChannel chan<- error
 			continue
 		}
 
+		var category, color string
+
+		split := strings.Split(line, "|")
+
+		if len(split) != 2 {
+			if verbose {
+				fmt.Printf("Invalid color mapping: `%s`. Skipping.\n", line)
+			}
+
+			return colors
+		}
+
+		category = strings.TrimSpace(split[0])
+		color = strings.TrimSpace(split[1])
+
+		colors[category] = color
+	}
+
+	if verbose {
+		fmt.Printf("%s | Loaded %d color mappings in %s\n",
+			startTime.Format(logDate),
+			len(colors),
+			time.Since(startTime))
+	}
+
+	return colors
+}
+
+func loadFromFile(path string, list map[string]Trivia, errorChannel chan<- error) []string {
+	index := []string{}
+
+	f, err := os.Open(path)
+	if err != nil {
+		errorChannel <- err
+	}
+	defer func() {
+		err = f.Close()
+		if err != nil {
+			errorChannel <- err
+		}
+	}()
+
+	s := bufio.NewScanner(f)
+	b := make([]byte, 0, 64*1024)
+	s.Buffer(b, 1024*1024)
+	s.Split(bufio.ScanLines)
+
+	l := 0
+
+	for s.Scan() {
+		l += 1
+
+		line := s.Text()
+
+		if line == "" {
+			continue
+		}
+
 		var question, answer, category string
 
 		split := strings.Split(line, "|")
@@ -184,7 +244,10 @@ func loadFromFile(path string, list map[string]Trivia, errorChannel chan<- error
 			category = strings.TrimSpace(split[2])
 		default:
 			if verbose {
-				fmt.Printf("Invalid trivia entry: `%s`. Skipping.\n", line)
+				fmt.Printf("%s | Skipped invalid entry at %s:%d\n",
+					time.Now().Format(logDate),
+					path,
+					l)
 			}
 
 			continue
@@ -194,6 +257,18 @@ func loadFromFile(path string, list map[string]Trivia, errorChannel chan<- error
 
 		id := t.getId()
 
+		_, exists := list[id]
+		if exists {
+			if verbose {
+				fmt.Printf("%s | Skipped duplicate entry at %s:%d\n",
+					time.Now().Format(logDate),
+					path,
+					l)
+			}
+
+			continue
+		}
+
 		index = append(index, id)
 		list[id] = t
 	}
@@ -201,46 +276,14 @@ func loadFromFile(path string, list map[string]Trivia, errorChannel chan<- error
 	return index
 }
 
-func walkPath(path string, list map[string]Trivia, errorChannel chan<- error) []string {
-	index := []string{}
-
-	nodes, err := os.ReadDir(path)
-	if err != nil {
-		errorChannel <- err
-
-		return index
-	}
-
-	for _, node := range nodes {
-		fullPath := filepath.Join(path, node.Name())
-
-		switch {
-		case !node.IsDir() && filepath.Ext(node.Name()) == extension:
-			index = append(index, loadFromFile(fullPath, list, errorChannel)...)
-		case node.IsDir() && recursive:
-			index = append(index, walkPath(fullPath, list, errorChannel)...)
-		}
-	}
-
-	return index
-}
-
-func loadQuestions(questions *Questions, errorChannel chan<- error) int {
+func loadQuestions(paths []string, questions *Questions, errorChannel chan<- error) int {
 	startTime := time.Now()
 
 	index := []string{}
 	list := map[string]Trivia{}
 
-	if len(paths) > 0 {
-		for i := 0; i < len(paths); i++ {
-			index = append(index, walkPath(paths[i], list, errorChannel)...)
-		}
-	}
-
-	if len(files) > 0 {
-		for i := 0; i < len(files); i++ {
-			index = append(index, loadFromFile(files[i], list, errorChannel)...)
-		}
+	for i := 0; i < len(paths); i++ {
+		index = append(index, walkPath(paths[i], list, errorChannel)...)
 	}
 
 	if len(index) < 1 || len(list) < 1 {
@@ -277,7 +320,7 @@ func serveHome(questions *Questions) httprouter.Handle {
 	}
 }
 
-func serveQuestion(questions *Questions, template *template.Template, errorChannel chan<- error) httprouter.Handle {
+func serveQuestion(questions *Questions, colors map[string]string, template *template.Template, errorChannel chan<- error) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 		startTime := time.Now()
 
@@ -301,7 +344,7 @@ func serveQuestion(questions *Questions, template *template.Template, errorChann
 
 		q := questions.getTrivia(path.Base(r.URL.Path))
 
-		color, exists := Colors[q.Category]
+		color, exists := colors[q.Category]
 		if !exists {
 			color = "lightblue"
 		}
@@ -324,7 +367,7 @@ func serveQuestion(questions *Questions, template *template.Template, errorChann
 	}
 }
 
-func registerQuestions(mux *httprouter.Router, questions *Questions, errorChannel chan<- error) {
+func registerQuestions(mux *httprouter.Router, colors map[string]string, questions *Questions, errorChannel chan<- error) {
 	template, err := template.New("question").Parse(tpl)
 	if err != nil {
 		errorChannel <- err
@@ -333,5 +376,5 @@ func registerQuestions(mux *httprouter.Router, questions *Questions, errorChanne
 	}
 
 	mux.GET("/", serveHome(questions))
-	mux.GET("/q/:id", serveQuestion(questions, template, errorChannel))
+	mux.GET("/q/:id", serveQuestion(questions, colors, template, errorChannel))
 }
