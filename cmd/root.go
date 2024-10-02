@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	ReleaseVersion string = "2.5.0"
+	ReleaseVersion string = "2.6.0"
 )
 
 var (
@@ -50,7 +50,7 @@ func NewRootCommand() *cobra.Command {
 	rootCmd.Flags().StringVarP(&colorsFile, "colors", "c", "", "file from which to load color schemes")
 	rootCmd.Flags().BoolVar(&exitOnError, "exit-on-error", false, "shut down webserver on error, instead of just printing the error")
 	rootCmd.Flags().BoolVar(&export, "export", false, "allow exporting of trivia database")
-	rootCmd.Flags().StringVar(&extension, "extension", ".trivia", "only process files ending in this extension")
+	rootCmd.Flags().StringVar(&extension, "extension", ".trivia", "only process files ending in this extension (leave empty to match all files)")
 	rootCmd.Flags().BoolVar(&html, "html", false, "allow arbitrary html tags in input")
 	rootCmd.Flags().Uint16VarP(&port, "port", "p", 8080, "port to listen on")
 	rootCmd.Flags().BoolVar(&profile, "profile", false, "register net/http/pprof handlers")

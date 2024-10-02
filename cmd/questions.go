@@ -252,7 +252,7 @@ func walkPath(path string, list map[string]Trivia, errorChannel chan<- error) []
 			fullPath := filepath.Join(path, node.Name())
 
 			switch {
-			case !node.IsDir() && filepath.Ext(node.Name()) == extension:
+			case !node.IsDir() && (extension == "" || filepath.Ext(node.Name()) == extension):
 				index = append(index, loadFromFile(fullPath, list, errorChannel)...)
 			case node.IsDir() && recursive:
 				index = append(index, walkPath(fullPath, list, errorChannel)...)
