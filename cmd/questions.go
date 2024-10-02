@@ -68,7 +68,7 @@ func (t *Trivia) getId() string {
 type Questions struct {
 	mu    sync.RWMutex
 	index []string
-	list  map[string]Trivia
+	list  map[string]*Trivia
 }
 
 func (q *Questions) getRandomId() string {
@@ -84,7 +84,7 @@ func (q *Questions) getTrivia(path string) *Trivia {
 	t := q.list[path]
 	q.mu.RUnlock()
 
-	return &t
+	return t
 }
 
 func getTemplate() string {
@@ -236,7 +236,7 @@ func validatePaths(args []string) ([]string, error) {
 	return paths, nil
 }
 
-func walkPath(path string, list map[string]Trivia, errorChannel chan<- error) []string {
+func walkPath(path string, list map[string]*Trivia, errorChannel chan<- error) []string {
 	index := []string{}
 
 	nodes, err := os.ReadDir(path)
@@ -263,7 +263,7 @@ func walkPath(path string, list map[string]Trivia, errorChannel chan<- error) []
 	return index
 }
 
-func loadFromFile(path string, list map[string]Trivia, errorChannel chan<- error) []string {
+func loadFromFile(path string, list map[string]*Trivia, errorChannel chan<- error) []string {
 	index := []string{}
 
 	f, err := os.Open(path)
@@ -317,7 +317,7 @@ func loadFromFile(path string, list map[string]Trivia, errorChannel chan<- error
 			continue
 		}
 
-		t := Trivia{question, answer, category}
+		t := &Trivia{question, answer, category}
 
 		id := t.getId()
 
@@ -344,7 +344,7 @@ func loadQuestions(paths []string, questions *Questions, errorChannel chan<- err
 	startTime := time.Now()
 
 	index := []string{}
-	list := map[string]Trivia{}
+	list := map[string]*Trivia{}
 
 	for i := 0; i < len(paths); i++ {
 		index = append(index, walkPath(paths[i], list, errorChannel)...)
