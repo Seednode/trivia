@@ -242,7 +242,7 @@ func walkPath(path string, list map[string]Trivia, errorChannel chan<- error) []
 	nodes, err := os.ReadDir(path)
 	switch {
 	case errors.Is(err, syscall.ENOTDIR):
-		if filepath.Ext(path) == extension {
+		if extension == "" || filepath.Ext(path) == extension {
 			index = append(index, loadFromFile(path, list, errorChannel)...)
 		}
 	case err != nil:
