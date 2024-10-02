@@ -6,8 +6,8 @@ package cmd
 
 import (
 	"bufio"
-	random "crypto/rand"
 	"crypto/sha1"
+	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
 	"errors"
@@ -27,13 +27,28 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
+type Color struct {
+	Hex  string
+	Hash string
+}
+
+const (
+	lightBlue string = "#add8e6"
+)
+
+var (
+	DefaultColor = Color{
+		Hex:  lightBlue,
+		Hash: getChecksum(lightBlue),
+	}
+)
+
 type Question struct {
 	Version  string
 	Question any
 	Answer   any
 	Category string
 	Color    string
-	Nonce    string
 }
 
 type Trivia struct {
@@ -82,7 +97,7 @@ func getTemplate() string {
 	<meta name="Description" content="A very basic trivia webapp." />
 	<title>Trivia v{{.Version}}</title>
     <link rel="stylesheet" href="/css/question.css" />
-	<style nonce="{{.Nonce}}">.footer {background-color:{{.Color}};}</style>
+	<style>.footer {background-color:{{.Color}};}</style>
 	<script src="/js/darkMode.js"></script>
 	<script src="/js/toggleAnswer.js" defer></script>
     <link rel="apple-touch-icon" sizes="180x180" href="/favicons/apple-touch-icon.png" />
@@ -113,36 +128,21 @@ func getTemplate() string {
 `
 }
 
-func generateNonce() (string, error) {
-	n := make([]byte, 32)
-	_, err := random.Read(n)
-	if err != nil {
-		return "", fmt.Errorf("could not generate nonce")
-	}
+func getChecksum(hex string) string {
+	h := sha256.New()
+	h.Write([]byte(fmt.Sprintf(".footer {background-color:%s;}", hex)))
 
-	return base64.URLEncoding.EncodeToString(n), nil
+	return base64.StdEncoding.EncodeToString(h.Sum(nil))
 }
 
-func loadColors(path string, errorChannel chan<- error) map[string]string {
+func loadColors(path string, errorChannel chan<- error) map[string]Color {
 	if colorsFile == "" {
-		return map[string]string{
-			"Entertainment":     "#da6ab2",
-			"History":           "#e5cb3a",
-			"Arts & Literature": "#7a563c",
-			"Science & Nature":  "#157255",
-			"Sports & Leisure":  "#db6327",
-			"Global View":       "#6d6b82",
-			"Sound & Screen":    "#a04251",
-			"News":              "#b37e00",
-			"The Written Word":  "#7a4e34",
-			"Innovations":       "#4f7144",
-			"Game Time":         "#a66231",
-		}
+		return map[string]Color{}
 	}
 
 	startTime := time.Now()
 
-	colors := map[string]string{}
+	colors := map[string]Color{}
 
 	f, err := os.Open(path)
 	if err != nil {
@@ -177,7 +177,13 @@ func loadColors(path string, errorChannel chan<- error) map[string]string {
 			continue
 		}
 
-		colors[strings.TrimSpace(split[0])] = strings.TrimSpace(split[1])
+		category := strings.TrimSpace(split[0])
+		hex := strings.TrimSpace(split[1])
+
+		colors[category] = Color{
+			Hex:  hex,
+			Hash: getChecksum(hex),
+		}
 	}
 
 	if verbose {
@@ -376,20 +382,11 @@ func serveHome(questions *Questions) httprouter.Handle {
 	}
 }
 
-func serveQuestion(questions *Questions, colors map[string]string, tpl *template.Template, errorChannel chan<- error) httprouter.Handle {
+func serveQuestion(questions *Questions, colors map[string]Color, tpl *template.Template, errorChannel chan<- error) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 		startTime := time.Now()
 
 		w.Header().Set("Content-Type", "text/html;charset=UTF-8")
-
-		nonce, err := generateNonce()
-		if err != nil {
-			errorChannel <- err
-
-			return
-		}
-
-		w.Header().Set("Content-Security-Policy", fmt.Sprintf("default-src 'self' 'nonce-%s'", nonce))
 
 		if verbose {
 			fmt.Printf("%s | %s => %s\n",
@@ -402,16 +399,17 @@ func serveQuestion(questions *Questions, colors map[string]string, tpl *template
 
 		color, exists := colors[q.Category]
 		if !exists {
-			color = "lightblue"
+			color = DefaultColor
 		}
+
+		w.Header().Set("Content-Security-Policy", fmt.Sprintf("default-src 'self'; style-src-elem 'self' 'sha256-%s'", color.Hash))
 
 		question := Question{
 			Version:  ReleaseVersion,
 			Question: "",
 			Answer:   "",
 			Category: q.Category,
-			Color:    color,
-			Nonce:    nonce,
+			Color:    color.Hex,
 		}
 
 		if html {
@@ -422,14 +420,14 @@ func serveQuestion(questions *Questions, colors map[string]string, tpl *template
 			question.Answer = q.Answer
 		}
 
-		err = tpl.Execute(w, question)
+		err := tpl.Execute(w, question)
 		if err != nil {
 			errorChannel <- err
 		}
 	}
 }
 
-func registerQuestions(mux *httprouter.Router, colors map[string]string, questions *Questions, errorChannel chan<- error) {
+func registerQuestions(mux *httprouter.Router, colors map[string]Color, questions *Questions, errorChannel chan<- error) {
 	template, err := template.New("question").Parse(getTemplate())
 	if err != nil {
 		errorChannel <- err
