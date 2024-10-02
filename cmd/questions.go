@@ -174,7 +174,7 @@ func loadColors(path string, errorChannel chan<- error) map[string]string {
 				fmt.Printf("Invalid color mapping: `%s`. Skipping.\n", line)
 			}
 
-			return colors
+			continue
 		}
 
 		colors[strings.TrimSpace(split[0])] = strings.TrimSpace(split[1])
