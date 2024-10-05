@@ -101,3 +101,11 @@ a {
     -webkit-user-select: none;
     word-wrap: break-word;
 }
+
+#toggle:active {
+    background-color: var(--content);
+    -webkit-box-shadow: inset 0px 0px 5px var(--highlight);
+       -moz-box-shadow: inset 0px 0px 5px var(--highlight);
+            box-shadow: inset 0px 0px 5px var(--highlight);
+     outline: none;
+  }
