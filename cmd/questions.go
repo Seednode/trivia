@@ -102,8 +102,7 @@ func (q *Questions) getTrivia(path string) *Trivia {
 }
 
 func getTemplate() string {
-	return `
-<!DOCTYPE html>
+	return `<!DOCTYPE html>
 <html lang="en-US">
   <head>
     <meta charset="utf-8" />
