@@ -32,6 +32,11 @@ a {
     all: unset;
 }
 
+#help {
+    cursor: pointer;
+    text-decoration: underline;
+}
+
 #hint {
     color: var(--comment);
     font-size: .75rem;

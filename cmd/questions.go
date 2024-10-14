@@ -33,6 +33,7 @@ type Color struct {
 }
 
 const (
+	darkRed   string = "#ff000d"
 	lightBlue string = "#add8e6"
 )
 
@@ -40,6 +41,11 @@ var (
 	DefaultColor = Color{
 		Hex:  lightBlue,
 		Hash: getChecksum(lightBlue),
+	}
+
+	ErrorColor = Color{
+		Hex:  darkRed,
+		Hash: getChecksum(darkRed),
 	}
 )
 
@@ -73,6 +79,10 @@ type Questions struct {
 
 func (q *Questions) getRandomId() string {
 	q.mu.RLock()
+	if len(q.index) < 1 {
+		return ""
+	}
+
 	id := q.index[rand.IntN(len(q.index))]
 	q.mu.RUnlock()
 
@@ -81,8 +91,12 @@ func (q *Questions) getRandomId() string {
 
 func (q *Questions) getTrivia(path string) *Trivia {
 	q.mu.RLock()
-	t := q.list[path]
+	t, exists := q.list[path]
 	q.mu.RUnlock()
+
+	if !exists {
+		return nil
+	}
 
 	return t
 }
@@ -352,16 +366,6 @@ func loadQuestions(paths []string, questions *Questions, errorChannel chan<- err
 
 	if len(index) < 1 || len(list) < 1 {
 		fmt.Printf("%s | No supported files found.\n", startTime.Format(logDate))
-
-		t := &Trivia{
-			Question: "How do I load questions into Trivia?",
-			Answer:   "See https://github.com/Seednode/trivia?tab=readme-ov-file#file-format",
-			Category: "Usage",
-		}
-		id := t.getId()
-
-		index = append(index, id)
-		list[id] = t
 	}
 
 	questions.mu.Lock()
@@ -403,11 +407,17 @@ func serveQuestion(questions *Questions, colors map[string]Color, tpl *template.
 				r.RequestURI)
 		}
 
+		color := DefaultColor
+
 		q := questions.getTrivia(path.Base(r.URL.Path))
 
-		color, exists := colors[q.Category]
-		if !exists {
-			color = DefaultColor
+		if q == nil || len(questions.index) < 1 {
+			color = ErrorColor
+		} else {
+			c, exists := colors[q.Category]
+			if !exists {
+				color = c
+			}
 		}
 
 		w.Header().Set("Content-Security-Policy", fmt.Sprintf("default-src 'self'; style-src-elem 'self' 'sha256-%s'", color.Hash))
@@ -416,16 +426,27 @@ func serveQuestion(questions *Questions, colors map[string]Color, tpl *template.
 			Version:  ReleaseVersion,
 			Question: "",
 			Answer:   "",
-			Category: q.Category,
+			Category: "",
 			Color:    color.Hex,
 		}
 
-		if html {
+		switch {
+		case len(questions.index) < 1:
+			question.Question = "How do I load questions into Trivia?"
+			question.Answer = template.HTML("See <a id='help' href='https://github.com/Seednode/trivia?tab=readme-ov-file#file-format'>the docs</a>.")
+			question.Category = "Usage"
+		case q == nil:
+			question.Question = "Are you sure this URL is correct?"
+			question.Answer = template.HTML("If not, please go back to the <a id='help' href='/'>homepage</a> and try again.")
+			question.Category = "Error"
+		case html:
 			question.Question = template.HTML(q.Question)
 			question.Answer = template.HTML(q.Answer)
-		} else {
+			question.Category = q.Category
+		default:
 			question.Question = q.Question
 			question.Answer = q.Answer
+			question.Category = q.Category
 		}
 
 		err := tpl.Execute(w, question)
@@ -444,5 +465,5 @@ func registerQuestions(mux *httprouter.Router, colors map[string]Color, question
 	}
 
 	mux.GET("/", serveHome(questions))
-	mux.GET("/q/:id", serveQuestion(questions, colors, template, errorChannel))
+	mux.GET("/q/*id", serveQuestion(questions, colors, template, errorChannel))
 }
