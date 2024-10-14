@@ -351,9 +351,17 @@ func loadQuestions(paths []string, questions *Questions, errorChannel chan<- err
 	}
 
 	if len(index) < 1 || len(list) < 1 {
-		fmt.Printf("%s | No supported files found. Exiting.\n", startTime.Format(logDate))
+		fmt.Printf("%s | No supported files found.\n", startTime.Format(logDate))
 
-		os.Exit(1)
+		t := &Trivia{
+			Question: "How do I load questions into Trivia?",
+			Answer:   "See https://github.com/Seednode/trivia?tab=readme-ov-file#file-format",
+			Category: "Usage",
+		}
+		id := t.getId()
+
+		index = append(index, id)
+		list[id] = t
 	}
 
 	questions.mu.Lock()
