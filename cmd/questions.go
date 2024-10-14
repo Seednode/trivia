@@ -137,8 +137,7 @@ func getTemplate() string {
     <div id="answer"><p>{{.Answer}}</p></div>
     <div class="footer"><p>{{.Category}}</p></div>
   </body>
-</html>
-`
+</html>`
 }
 
 func getChecksum(hex string) string {
