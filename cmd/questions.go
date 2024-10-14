@@ -415,7 +415,7 @@ func serveQuestion(questions *Questions, colors map[string]Color, tpl *template.
 			color = ErrorColor
 		} else {
 			c, exists := colors[q.Category]
-			if !exists {
+			if exists {
 				color = c
 			}
 		}
