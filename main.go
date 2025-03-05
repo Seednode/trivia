@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	ReleaseVersion string = "3.2.0"
+	ReleaseVersion string = "3.3.0"
 )
 
 var (
@@ -26,7 +26,6 @@ var (
 	export         bool
 	extension      string
 	html           bool
-	https          bool
 	port           uint16
 	profile        bool
 	recursive      bool
@@ -46,8 +45,8 @@ func main() {
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			initializeConfig(cmd)
 
-			if https && (tlsCert == "" || tlsKey == "") {
-				return errors.New("TLS certificate and keyfile must be specified when HTTPS is enabled")
+			if tlsCert == "" && tlsKey != "" || tlsCert != "" && tlsKey == "" {
+				return errors.New("TLS certificate and keyfile must both be specified to enable HTTPS")
 			}
 
 			return nil
@@ -63,7 +62,6 @@ func main() {
 	cmd.Flags().BoolVar(&export, "export", false, "allow exporting of trivia database")
 	cmd.Flags().StringVar(&extension, "extension", ".trivia", "only process files ending in this extension (leave empty to match all files)")
 	cmd.Flags().BoolVar(&html, "html", false, "allow arbitrary html tags in input")
-	cmd.Flags().BoolVar(&https, "https", false, "listen over https instead of http")
 	cmd.Flags().Uint16VarP(&port, "port", "p", 8080, "port to listen on")
 	cmd.Flags().BoolVar(&profile, "profile", false, "register net/http/pprof handlers")
 	cmd.Flags().BoolVar(&reload, "reload", false, "allow live-reload of questions")

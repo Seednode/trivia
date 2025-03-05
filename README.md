@@ -105,7 +105,7 @@ Flags:
   -c, --colors string            file from which to load color schemes
       --exit-on-error            shut down webserver on error, instead of just printing the error
       --export                   allow exporting of trivia database
-      --extension string         only process files ending in this extension (default ".trivia")
+      --extension string         only process files ending in this extension (leave empty to match all files) (default ".trivia")
   -h, --help                     help for trivia
       --html                     allow arbitrary html tags in input
   -p, --port uint16              port to listen on (default 8080)
@@ -113,6 +113,8 @@ Flags:
   -r, --recursive                recurse into directories
       --reload                   allow live-reload of questions
       --reload-interval string   interval at which to rebuild question list (e.g. "5m" or "1h")
+      --tls-cert string          path to TLS certificate
+      --tls-key string           path to TLS keyfile
   -v, --verbose                  log requests to stdout
   -V, --version                  display version and exit
 ```

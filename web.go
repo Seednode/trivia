@@ -162,7 +162,7 @@ func servePage(args []string) error {
 
 	mux.GET("/version", serveVersion(errorChannel))
 
-	if https {
+	if tlsKey != "" && tlsCert != "" {
 		fmt.Printf("%s | Listening on https://%s/\n",
 			time.Now().Format(logDate),
 			srv.Addr)
