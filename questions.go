@@ -129,7 +129,7 @@ func getTemplate() string {
   </head>
   <body>
     <p id="dark-mode">Toggle dark mode</p>
-    <p id="hint">(Click on a question to load a new one)</p>
+    <p id="hint">(Click on the question to load a new one)</p>
     <a href="/"><p id="question">{{.Question}}</p></a>
     <button id="toggle">Show Answer</button>
     <div id="answer"><p>{{.Answer}}</p></div>

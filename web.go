@@ -44,14 +44,22 @@ func realIP(r *http.Request) string {
 	cfIp := r.Header.Get("Cf-Connecting-Ip")
 	xRealIp := r.Header.Get("X-Real-Ip")
 
+	requestor := ""
+
 	switch {
 	case cfIp != "":
-		return cfIp + ":" + remotePort
+		requestor = cfIp
 	case xRealIp != "":
-		return xRealIp + ":" + remotePort
+		requestor = xRealIp
 	default:
-		return r.RemoteAddr
+		requestor = strings.Join(remoteAddr[:(len(remoteAddr)-1)], "")
 	}
+
+	if net.ParseIP(requestor).To4() == nil {
+		requestor = fmt.Sprintf("[%s]", requestor)
+	}
+
+	return requestor + ":" + remotePort
 }
 
 func serverError(w http.ResponseWriter, r *http.Request, i interface{}) {
