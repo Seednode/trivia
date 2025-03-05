@@ -140,7 +140,7 @@ func getTemplate() string {
 
 func getChecksum(hex string) string {
 	h := sha256.New()
-	h.Write([]byte(fmt.Sprintf(".footer {background-color:%s;}", hex)))
+	h.Write(fmt.Appendf([]byte{}, ".footer {background-color:%s;}", hex))
 
 	return base64.StdEncoding.EncodeToString(h.Sum(nil))
 }
@@ -234,7 +234,7 @@ func normalizePath(path string) (string, error) {
 func validatePaths(args []string) ([]string, error) {
 	var paths []string
 
-	for i := 0; i < len(args); i++ {
+	for i := range args {
 		path, err := normalizePath(args[i])
 		if err != nil {
 			return nil, err
@@ -356,7 +356,7 @@ func loadQuestions(paths []string, questions *Questions, errorChannel chan<- err
 	index := []string{}
 	list := map[string]*Trivia{}
 
-	for i := 0; i < len(paths); i++ {
+	for i := range paths {
 		index = append(index, walkPath(paths[i], list, errorChannel)...)
 	}
 
