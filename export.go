@@ -18,6 +18,10 @@ func serveExport(questions *Questions, errorChannel chan<- error) httprouter.Han
 
 		w.Header().Set("Content-Type", "text/plain;charset=UTF-8")
 
+		w.Header().Add("Content-Security-Policy", "default-src 'self';")
+
+		securityHeaders(w)
+
 		if verbose {
 			fmt.Printf("%s | %s => %s\n",
 				startTime.Format(logDate),
@@ -37,7 +41,6 @@ func serveExport(questions *Questions, errorChannel chan<- error) httprouter.Han
 				return
 			}
 		}
-
 	}
 }
 

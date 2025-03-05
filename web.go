@@ -21,6 +21,17 @@ const (
 	logDate string = `2006-01-02T15:04:05.000-07:00`
 )
 
+func securityHeaders(w http.ResponseWriter) {
+	w.Header().Set("Cross-Origin-Embedder-Policy", "require-corp")
+	w.Header().Set("Cross-Origin-Opener-Policy", "same-origin")
+	w.Header().Set("Cross-Origin-Resource-Policy", "same-site")
+	w.Header().Set("Permissions-Policy", "geolocation=(), midi=(), sync-xhr=(), microphone=(), camera=(), magnetometer=(), gyroscope=(), fullscreen=(), payment=()")
+	w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.Header().Set("X-Frame-Options", "SAMEORIGIN")
+	w.Header().Set("X-Xss-Protection", "1; mode=block")
+}
+
 func realIP(r *http.Request) string {
 	remoteAddr := strings.SplitAfter(r.RemoteAddr, ":")
 

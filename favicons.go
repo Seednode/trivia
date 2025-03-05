@@ -27,6 +27,10 @@ func serveFavicons(errorChannel chan<- error) httprouter.Handle {
 
 		w.Header().Set("Content-Length", strconv.Itoa(len(data)))
 
+		w.Header().Add("Content-Security-Policy", "default-src 'self';")
+
+		securityHeaders(w)
+
 		_, err = w.Write(data)
 		if err != nil {
 			errorChannel <- err

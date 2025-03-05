@@ -417,7 +417,8 @@ func serveQuestion(questions *Questions, colors map[string]Color, tpl *template.
 		}
 
 		w.Header().Set("Content-Security-Policy", fmt.Sprintf("default-src 'self'; style-src-elem 'self' 'sha256-%s'", color.Hash))
-		w.Header().Set("Cross-Origin-Opener-Policy", "same-origin")
+
+		securityHeaders(w)
 
 		question := Question{
 			Version:  ReleaseVersion,

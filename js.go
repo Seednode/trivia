@@ -21,6 +21,10 @@ func serveJs(errorChannel chan<- error) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 		w.Header().Set("Content-Type", "text/javascript; charset=utf-8")
 
+		w.Header().Add("Content-Security-Policy", "default-src 'self';")
+
+		securityHeaders(w)
+
 		fname := strings.TrimPrefix(r.URL.Path, "/")
 
 		data, err := js.ReadFile(fname)

@@ -30,6 +30,10 @@ func serveCss(errorChannel chan<- error) httprouter.Handle {
 
 		w.Header().Set("Content-Type", "text/css; charset=utf-8")
 
+		w.Header().Add("Content-Security-Policy", "default-src 'self'")
+
+		securityHeaders(w)
+
 		_, err = w.Write(data)
 		if err != nil {
 			errorChannel <- err

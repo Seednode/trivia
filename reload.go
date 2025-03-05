@@ -56,6 +56,8 @@ func serveReload(paths []string, questions *Questions, errorChannel chan<- error
 		startTime := time.Now()
 
 		w.Header().Set("Content-Type", "text/html;charset=UTF-8")
+		
+		securityHeaders(w)
 
 		if verbose {
 			fmt.Printf("%s | %s => %s\n",
