@@ -162,11 +162,19 @@ func servePage(args []string) error {
 
 	mux.GET("/version", serveVersion(errorChannel))
 
-	fmt.Printf("%s | Listening on http://%s/\n",
-		time.Now().Format(logDate),
-		srv.Addr)
+	if https {
+		fmt.Printf("%s | Listening on https://%s/\n",
+			time.Now().Format(logDate),
+			srv.Addr)
 
-	err = srv.ListenAndServe()
+		err = srv.ListenAndServeTLS(tlsCert, tlsKey)
+	} else {
+		fmt.Printf("%s | Listening on http://%s/\n",
+			time.Now().Format(logDate),
+			srv.Addr)
+
+		err = srv.ListenAndServe()
+	}
 
 	return err
 }

@@ -5,6 +5,7 @@ Copyright © 2025 Seednode <seednode@seedno.de>
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"strings"
@@ -15,7 +16,7 @@ import (
 )
 
 const (
-	ReleaseVersion string = "3.1.0"
+	ReleaseVersion string = "3.2.0"
 )
 
 var (
@@ -25,11 +26,14 @@ var (
 	export         bool
 	extension      string
 	html           bool
+	https          bool
 	port           uint16
 	profile        bool
 	recursive      bool
 	reload         bool
 	reloadInterval string
+	tlsCert        string
+	tlsKey         string
 	verbose        bool
 	version        bool
 )
@@ -39,8 +43,14 @@ func main() {
 		Use:   "trivia",
 		Short: "Serves a basic trivia web frontend.",
 		Args:  cobra.MinimumNArgs(1),
-		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			initializeConfig(cmd)
+
+			if https && (tlsCert == "" || tlsKey == "") {
+				return errors.New("TLS certificate and keyfile must be specified when HTTPS is enabled")
+			}
+
+			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return servePage(args)
@@ -53,11 +63,14 @@ func main() {
 	cmd.Flags().BoolVar(&export, "export", false, "allow exporting of trivia database")
 	cmd.Flags().StringVar(&extension, "extension", ".trivia", "only process files ending in this extension (leave empty to match all files)")
 	cmd.Flags().BoolVar(&html, "html", false, "allow arbitrary html tags in input")
+	cmd.Flags().BoolVar(&https, "https", false, "listen over https instead of http")
 	cmd.Flags().Uint16VarP(&port, "port", "p", 8080, "port to listen on")
 	cmd.Flags().BoolVar(&profile, "profile", false, "register net/http/pprof handlers")
 	cmd.Flags().BoolVar(&reload, "reload", false, "allow live-reload of questions")
 	cmd.Flags().StringVar(&reloadInterval, "reload-interval", "", "interval at which to rebuild question list (e.g. \"5m\" or \"1h\")")
 	cmd.Flags().BoolVarP(&recursive, "recursive", "r", false, "recurse into directories")
+	cmd.Flags().StringVar(&tlsCert, "tls-cert", "", "path to TLS certificate")
+	cmd.Flags().StringVar(&tlsKey, "tls-key", "", "path to TLS keyfile")
 	cmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "log requests to stdout")
 	cmd.Flags().BoolVarP(&version, "version", "V", false, "display version and exit")
 
