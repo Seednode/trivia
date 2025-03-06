@@ -33,7 +33,7 @@ func securityHeaders(w http.ResponseWriter) {
 }
 
 func realIP(r *http.Request) string {
-	remoteAddr := strings.SplitAfter(r.RemoteAddr, ":")
+	remoteAddr := strings.Split(r.RemoteAddr, ":")
 
 	if len(remoteAddr) < 1 {
 		return r.RemoteAddr
@@ -48,21 +48,25 @@ func realIP(r *http.Request) string {
 
 	switch {
 	case cfIp != "":
-		requestor = cfIp
+		if net.ParseIP(cfIp).To4() == nil {
+			cfIp = "[" + cfIp + "]"
+		}
+
+		requestor = cfIp + ":" + remotePort
 	case xRealIp != "":
-		requestor = xRealIp
+		if net.ParseIP(cfIp).To4() == nil {
+			xRealIp = "[" + xRealIp + "]"
+		}
+
+		requestor = xRealIp + ":" + remotePort
 	default:
-		requestor = strings.Join(remoteAddr[:(len(remoteAddr)-1)], "")
+		requestor = r.RemoteAddr
 	}
 
-	if net.ParseIP(requestor).To4() == nil {
-		requestor = fmt.Sprintf("[%s]", requestor)
-	}
-
-	return requestor + ":" + remotePort
+	return requestor
 }
 
-func serverError(w http.ResponseWriter, r *http.Request, i interface{}) {
+func serverError(w http.ResponseWriter, r *http.Request, i any) {
 	if verbose {
 		fmt.Printf("%s | %s => %s (Invalid request)\n",
 			time.Now().Format(logDate),
@@ -76,7 +80,7 @@ func serverError(w http.ResponseWriter, r *http.Request, i interface{}) {
 	w.Write([]byte("500 Internal Server Error\n"))
 }
 
-func serverErrorHandler() func(http.ResponseWriter, *http.Request, interface{}) {
+func serverErrorHandler() func(http.ResponseWriter, *http.Request, any) {
 	return serverError
 }
 
