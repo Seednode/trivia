@@ -91,7 +91,7 @@ The associated environment variable is the prefix `TRIVIA_` plus the flag name, 
 
 For example:
 - `--colors /home/sinc/trivia/colors.txt` becomes `TRIVIA_COLORS=/home/sinc/trivia/colors.txt`
-- `--recursive` becomes `TRIVIA_RECURSIVE=true`.
+- `--recursive` becomes `TRIVIA_RECURSIVE=true`
 
 ## Usage output
 ```
