@@ -33,7 +33,7 @@ func securityHeaders(w http.ResponseWriter) {
 }
 
 func realIP(r *http.Request) string {
-	remoteAddr := strings.Split(r.RemoteAddr, ":")
+	remoteAddr := strings.SplitAfter(r.RemoteAddr, ":")
 
 	if len(remoteAddr) < 1 {
 		return r.RemoteAddr
