@@ -113,9 +113,9 @@ func getTemplate() string {
     <style>.footer {background-color:{{.Color}};}</style>
     <script src="/js/darkMode.js"></script>
     <script src="/js/toggleAnswer.js" defer></script>
-    <link rel="apple-touch-icon" sizes="180x180" href="/favicons/apple-touch-icon.png" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicons/favicon-32x32.png" />
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicons/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/favicons/apple-touch-icon.webp" />
+    <link rel="icon" type="image/webp" sizes="32x32" href="/favicons/favicon-32x32.webp" />
+    <link rel="icon" type="image/webp" sizes="16x16" href="/favicons/favicon-16x16.webp" />
     <link rel="manifest" href="/favicons/site.webmanifest" crossorigin="use-credentials" />
     <link rel="mask-icon" href="/favicons/safari-pinned-tab.svg" color="#5bbad5" />
     <meta name="msapplication-TileColor" content="#da532c" />
@@ -125,7 +125,7 @@ func getTemplate() string {
     <meta property="og:description" content="A very basic trivia webapp." />
     <meta property="og:url" content="https://github.com/Seednode/trivia" />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="/favicons/apple-touch-icon.png" />
+    <meta property="og:image" content="/favicons/apple-touch-icon.webp" />
   </head>
   <body>
     <p id="dark-mode">Toggle dark mode</p>
