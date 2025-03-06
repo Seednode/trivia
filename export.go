@@ -34,7 +34,7 @@ func serveExport(questions *Questions, errorChannel chan<- error) httprouter.Han
 
 		for i := range questions.index {
 			entry := questions.list[questions.index[i]]
-			_, err := w.Write(fmt.Appendf([]byte{}, "Category: %s\nQuestion: %s\nAnswer: %s\n\n", entry.Category, entry.Question, entry.Answer))
+			_, err := w.Write(fmt.Appendf(nil, "Category: %s\nQuestion: %s\nAnswer: %s\n\n", entry.Category, entry.Question, entry.Answer))
 			if err != nil {
 				errorChannel <- err
 

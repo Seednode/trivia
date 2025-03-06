@@ -56,7 +56,7 @@ func serveReload(paths []string, questions *Questions, errorChannel chan<- error
 		startTime := time.Now()
 
 		w.Header().Set("Content-Type", "text/html;charset=UTF-8")
-		
+
 		securityHeaders(w)
 
 		if verbose {
@@ -68,7 +68,7 @@ func serveReload(paths []string, questions *Questions, errorChannel chan<- error
 
 		count := loadQuestions(paths, questions, errorChannel)
 
-		_, err := w.Write([]byte(fmt.Sprintf("Loaded %d questions in %s.\n", count, time.Since(startTime))))
+		_, err := w.Write(fmt.Appendf(nil, "Loaded %d questions in %s.\n", count, time.Since(startTime)))
 		if err != nil {
 			errorChannel <- err
 

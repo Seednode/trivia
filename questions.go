@@ -140,7 +140,7 @@ func getTemplate() string {
 
 func getChecksum(hex string) string {
 	h := sha256.New()
-	h.Write(fmt.Appendf([]byte{}, ".footer {background-color:%s;}", hex))
+	h.Write(fmt.Appendf(nil, ".footer {background-color:%s;}", hex))
 
 	return base64.StdEncoding.EncodeToString(h.Sum(nil))
 }
