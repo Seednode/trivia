@@ -188,5 +188,9 @@ func servePage(args []string) error {
 		err = srv.ListenAndServe()
 	}
 
-	return err
+	if !errors.Is(err, http.ErrServerClosed) {
+		return err
+	}
+
+	return nil
 }
