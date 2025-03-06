@@ -17,7 +17,7 @@ func serveVersion(errorChannel chan<- error) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 		startTime := time.Now()
 
-		data := []byte(fmt.Sprintf("trivia v%s\n", ReleaseVersion))
+		data := fmt.Appendf(nil, "trivia v%s\n", ReleaseVersion)
 
 		w.Header().Add("Content-Security-Policy", "default-src 'self';")
 
