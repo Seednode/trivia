@@ -1,4 +1,4 @@
-module seedno.de/seednode/trivia
+module github.com/Seednode/trivia
 
 go 1.24
 
