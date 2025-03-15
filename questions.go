@@ -51,6 +51,7 @@ var (
 
 type Question struct {
 	Version  string
+	Theme    string
 	Question any
 	Answer   any
 	Category string
@@ -109,9 +110,9 @@ func getTemplate() string {
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="Description" content="A very basic trivia webapp." />
     <title>Trivia v{{.Version}}</title>
-    <link rel="stylesheet" href="/css/question.css" />
+    <link rel="stylesheet" href="/css/{{.Theme}}.css" />
     <style>.footer {background-color:{{.Color}};}</style>
-    <script src="/js/darkMode.js"></script>
+	<script src="/js/toggleTheme.js"></script>
     <script src="/js/toggleAnswer.js" defer></script>
     <link rel="apple-touch-icon" sizes="180x180" href="/favicons/apple-touch-icon.webp" />
     <link rel="icon" type="image/webp" sizes="32x32" href="/favicons/favicon-32x32.webp" />
@@ -128,10 +129,10 @@ func getTemplate() string {
     <meta property="og:image" content="/favicons/apple-touch-icon.webp" />
   </head>
   <body>
-    <p id="dark-mode">Toggle dark mode</p>
+    <p id="toggle-theme">Toggle dark mode</p>
     <p id="hint">(Click on the question to load a new one)</p>
     <a href="/"><p id="question">{{.Question}}</p></a>
-    <button id="toggle">Show Answer</button>
+    <button id="toggle-answer">Show Answer</button>
     <div id="answer"><p>{{.Answer}}</p></div>
     <div class="footer"><p>{{.Category}}</p></div>
   </body>
@@ -422,6 +423,7 @@ func serveQuestion(questions *Questions, colors map[string]Color, tpl *template.
 
 		question := Question{
 			Version:  ReleaseVersion,
+			Theme:    getTheme(r),
 			Question: "",
 			Answer:   "",
 			Category: "",

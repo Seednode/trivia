@@ -8,6 +8,6 @@ function toggleAnswer() {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-    document.getElementById('toggle')
+    document.getElementById('toggle-answer')
     .addEventListener('click', toggleAnswer);
 });

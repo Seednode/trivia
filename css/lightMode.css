@@ -1,9 +1,9 @@
 :root {
-    --background: #002b36;
-    --highlight: #073642;
-    --comment: #586e75;
-    --content: #839496;
-    --emphasis: #93a1a1;
+    --background: #fdf6e3;
+    --highlight: #eee8d5;
+    --comment: #93a1a1;
+    --content: #657b83;
+    --emphasis: #586e75;
 }
 
 html, body, div, p, a, button {
@@ -43,7 +43,7 @@ a {
     user-select: none;
 }
 
-#dark-mode {
+#toggle-theme {
     cursor: pointer;
     font-size: .5rem;
     position: absolute;
@@ -88,7 +88,7 @@ a {
     text-align: center;
 }
 
-#toggle { 
+#toggle-answer { 
     appearance: none;
     background-color: var(--emphasis);
     border-radius: 1rem;
@@ -107,7 +107,7 @@ a {
     word-wrap: break-word;
 }
 
-#toggle:active {
+#toggle-answer:active {
     background-color: var(--content);
     -webkit-box-shadow: inset 0px 0px 5px var(--highlight);
        -moz-box-shadow: inset 0px 0px 5px var(--highlight);
