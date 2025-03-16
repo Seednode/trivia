@@ -141,7 +141,12 @@ func servePage(args []string) error {
 		list:  map[string]*Trivia{},
 	}
 
-	loadQuestions(paths, questions, errorChannel)
+	categories := &Categories{
+		index: []string{},
+		list:  map[string][]*Trivia{},
+	}
+
+	loadQuestions(paths, questions, categories, errorChannel)
 
 	registerFavicons(mux, errorChannel)
 
@@ -158,14 +163,14 @@ func servePage(args []string) error {
 	}
 
 	if reload {
-		registerReload(mux, paths, questions, errorChannel)
+		registerReload(mux, paths, questions, categories, errorChannel)
 	}
 
 	if reloadInterval != "" {
 		quit := make(chan struct{})
 		defer close(quit)
 
-		registerReloadInterval(paths, questions, quit, errorChannel)
+		registerReloadInterval(paths, questions, categories, quit, errorChannel)
 	}
 
 	colors := loadColors(colorsFile, errorChannel)

@@ -78,6 +78,12 @@ type Questions struct {
 	list  map[string]*Trivia
 }
 
+type Categories struct {
+	mu    sync.RWMutex
+	index []string
+	list  map[string][]*Trivia
+}
+
 func (q *Questions) getRandomId() string {
 	q.mu.RLock()
 	if len(q.index) < 1 {
@@ -247,14 +253,14 @@ func validatePaths(args []string) ([]string, error) {
 	return paths, nil
 }
 
-func walkPath(path string, list map[string]*Trivia, errorChannel chan<- error) []string {
-	index := []string{}
+func walkPath(path string, triviaList map[string]*Trivia, categoryList map[string][]*Trivia, errorChannel chan<- error) []string {
+	triviaIndex := []string{}
 
 	nodes, err := os.ReadDir(path)
 	switch {
 	case errors.Is(err, syscall.ENOTDIR):
 		if extension == "" || filepath.Ext(path) == extension {
-			index = append(index, loadFromFile(path, list, errorChannel)...)
+			triviaIndex = append(triviaIndex, loadFromFile(path, triviaList, categoryList, errorChannel)...)
 		}
 	case err != nil:
 		errorChannel <- err
@@ -264,18 +270,18 @@ func walkPath(path string, list map[string]*Trivia, errorChannel chan<- error) [
 
 			switch {
 			case !node.IsDir() && (extension == "" || filepath.Ext(node.Name()) == extension):
-				index = append(index, loadFromFile(fullPath, list, errorChannel)...)
+				triviaIndex = append(triviaIndex, loadFromFile(fullPath, triviaList, categoryList, errorChannel)...)
 			case node.IsDir() && recursive:
-				index = append(index, walkPath(fullPath, list, errorChannel)...)
+				triviaIndex = append(triviaIndex, walkPath(fullPath, triviaList, categoryList, errorChannel)...)
 			}
 		}
 	}
 
-	return index
+	return triviaIndex
 }
 
-func loadFromFile(path string, list map[string]*Trivia, errorChannel chan<- error) []string {
-	index := []string{}
+func loadFromFile(path string, triviaList map[string]*Trivia, categoryList map[string][]*Trivia, errorChannel chan<- error) []string {
+	triviaIndex := []string{}
 
 	f, err := os.Open(path)
 	if err != nil {
@@ -332,7 +338,7 @@ func loadFromFile(path string, list map[string]*Trivia, errorChannel chan<- erro
 
 		id := t.getId()
 
-		_, exists := list[id]
+		_, exists := triviaList[id]
 		if exists {
 			if verbose {
 				fmt.Printf("%s | Skipped duplicate entry at %s:%d\n",
@@ -344,39 +350,51 @@ func loadFromFile(path string, list map[string]*Trivia, errorChannel chan<- erro
 			continue
 		}
 
-		index = append(index, id)
-		list[id] = t
+		categoryList[category] = append(categoryList[category], t)
+
+		triviaIndex = append(triviaIndex, id)
+		triviaList[id] = t
 	}
 
-	return index
+	return triviaIndex
 }
 
-func loadQuestions(paths []string, questions *Questions, errorChannel chan<- error) int {
+func loadQuestions(paths []string, questions *Questions, categories *Categories, errorChannel chan<- error) (int, int) {
 	startTime := time.Now()
 
-	index := []string{}
-	list := map[string]*Trivia{}
+	triviaIndex := []string{}
+	triviaList := map[string]*Trivia{}
+
+	categoryIndex := []string{}
+	categoryList := map[string][]*Trivia{}
 
 	for i := range paths {
-		index = append(index, walkPath(paths[i], list, errorChannel)...)
+		triviaIndex = append(triviaIndex, walkPath(paths[i], triviaList, categoryList, errorChannel)...)
 	}
 
-	if len(index) < 1 || len(list) < 1 {
+	if len(triviaIndex) < 1 || len(triviaList) < 1 {
 		fmt.Printf("%s | No supported files found.\n", startTime.Format(logDate))
 	}
 
 	questions.mu.Lock()
-	questions.index = index
-	questions.list = list
-	length := len(questions.list)
+	questions.index = triviaIndex
+	questions.list = triviaList
+	triviaCount := len(questions.list)
 	questions.mu.Unlock()
 
-	fmt.Printf("%s | Loaded %d questions in %s\n",
+	categories.mu.Lock()
+	categories.index = categoryIndex
+	categories.list = categoryList
+	categoryCount := len(categories.list)
+	categories.mu.Unlock()
+
+	fmt.Printf("%s | Loaded %d questions across %d categories in %s\n",
 		startTime.Format(logDate),
-		length,
+		triviaCount,
+		categoryCount,
 		time.Since(startTime))
 
-	return length
+	return triviaCount, categoryCount
 }
 
 func serveHome(questions *Questions) httprouter.Handle {
