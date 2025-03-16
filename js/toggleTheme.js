@@ -1,10 +1,10 @@
 function toggleTheme() {
     const currentTheme = ('; '+document.cookie).split(`; colorTheme=`).pop().split(';')[0];
 
-    if (currentTheme == "darkMode") {
-        newTheme = "lightMode"
-    } else {
+    if (currentTheme == "lightMode") {
         newTheme = "darkMode"
+    } else {
+        newTheme = "lightMode"
     }
     
     document.cookie = "colorTheme=" + newTheme + "; expires=31536000; path=/";
