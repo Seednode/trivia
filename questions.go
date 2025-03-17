@@ -55,45 +55,96 @@ type Question struct {
 	Theme    string
 	Question any
 	Answer   any
-	Category string
+	Category Category
 	Color    string
 }
 
 type Trivia struct {
 	Question string
 	Answer   string
-	Category string
+	Category Category
 }
 
-func (t *Trivia) getId() string {
+func (t *Trivia) getId() QuestionId {
 	sha1hash := sha1.New()
-	sha1hash.Write([]byte(t.Question + t.Answer + t.Category))
+	sha1hash.Write([]byte(t.Question + t.Answer + t.Category.String()))
 	sha1string := hex.EncodeToString(sha1hash.Sum(nil))
 
-	return uuid.NewSHA1(uuid.NameSpaceURL, []byte(sha1string)).String()
+	return QuestionId(uuid.NewSHA1(uuid.NameSpaceURL, []byte(sha1string)).String())
+}
+
+type Category string
+
+func (c Category) String() string {
+	return string(c)
+}
+
+type QuestionId string
+
+func (q QuestionId) String() string {
+	return string(q)
 }
 
 type Questions struct {
-	mu    sync.RWMutex
-	index []string
-	list  map[string]*Trivia
+	mu sync.RWMutex
+
+	// Index is a mapping of a string representing a trivia category
+	// to the UUIDv5 identifiers of all questions in that category
+	index map[Category][]QuestionId
+
+	// List is a mapping of a UUIDv5 string representing a trivia question
+	// to a pointer to the struct itself
+	list map[QuestionId]*Trivia
 }
 
-func (q *Questions) getRandomId() string {
-	q.mu.RLock()
-	if len(q.index) < 1 {
-		return ""
-	}
+func (q *Questions) CategoryBytes() []byte {
+	var list []byte
 
-	id := q.index[rand.IntN(len(q.index))]
+	q.mu.RLock()
+	for category := range q.index {
+		list = fmt.Appendf(list, "%s\n", category)
+	}
 	q.mu.RUnlock()
 
-	return id
+	return list
 }
 
-func (q *Questions) getTrivia(path string) *Trivia {
+func (q *Questions) CategoryStrings() []string {
+	var list []string
+
 	q.mu.RLock()
-	t, exists := q.list[path]
+	for category := range q.index {
+		list = append(list, category.String())
+	}
+	q.mu.RUnlock()
+
+	slices.Sort(list)
+
+	return list
+}
+
+func (q *Questions) getRandomId(r *http.Request) QuestionId {
+	categories := getCategories(r, q)
+
+	ids := []QuestionId{}
+
+	q.mu.RLock()
+	defer q.mu.RUnlock()
+
+	for _, i := range categories {
+		ids = append(ids, q.index[Category(i)]...)
+	}
+
+	if len(ids) < 1 {
+		return "00000000-0000-0000-0000-000000000000"
+	}
+
+	return ids[rand.IntN(len(ids))]
+}
+
+func (q *Questions) getTrivia(id QuestionId) *Trivia {
+	q.mu.RLock()
+	t, exists := q.list[id]
 	q.mu.RUnlock()
 
 	if !exists {
@@ -101,34 +152,6 @@ func (q *Questions) getTrivia(path string) *Trivia {
 	}
 
 	return t
-}
-
-type Categories struct {
-	mu    sync.RWMutex
-	index []string
-	list  map[string][]*Trivia
-}
-
-func (c *Categories) Bytes() []byte {
-	var list []byte
-
-	c.mu.RLock()
-	for _, category := range c.index {
-		list = fmt.Appendf(list, "%s\n", category)
-	}
-	c.mu.RUnlock()
-
-	return list
-}
-
-func (c *Categories) Strings() []string {
-	var list []string
-
-	c.mu.RLock()
-	list = append(list, c.index...)
-	c.mu.RUnlock()
-
-	return list
 }
 
 func getQuestionTemplate() string {
@@ -175,14 +198,14 @@ func getChecksum(hex string) string {
 	return base64.StdEncoding.EncodeToString(h.Sum(nil))
 }
 
-func loadColors(path string, errorChannel chan<- error) map[string]Color {
+func loadColors(path string, errorChannel chan<- error) map[Category]Color {
 	if colorsFile == "" {
-		return map[string]Color{}
+		return map[Category]Color{}
 	}
 
 	startTime := time.Now()
 
-	colors := map[string]Color{}
+	colors := map[Category]Color{}
 
 	f, err := os.Open(path)
 	if err != nil {
@@ -217,7 +240,7 @@ func loadColors(path string, errorChannel chan<- error) map[string]Color {
 			continue
 		}
 
-		category := strings.TrimSpace(split[0])
+		category := Category(strings.TrimSpace(split[0]))
 		hex := strings.TrimSpace(split[1])
 
 		colors[category] = Color{
@@ -276,16 +299,14 @@ func validatePaths(args []string) ([]string, error) {
 	return paths, nil
 }
 
-func walkPath(path string, triviaList map[string]*Trivia, categoryList map[string][]*Trivia, errorChannel chan<- error) ([]string, []string) {
+func walkPath(path string, index map[Category][]QuestionId, list map[QuestionId]*Trivia, errorChannel chan<- error) ([]string, []string) {
 	triviaIndex, categoryIndex := []string{}, []string{}
 
 	nodes, err := os.ReadDir(path)
 	switch {
 	case errors.Is(err, syscall.ENOTDIR):
 		if extension == "" || filepath.Ext(path) == extension {
-			t, c := loadFromFile(path, triviaList, categoryList, errorChannel)
-			triviaIndex = append(triviaIndex, t...)
-			categoryIndex = append(categoryIndex, c...)
+			loadFromFile(path, index, list, errorChannel)
 		}
 	case err != nil:
 		errorChannel <- err
@@ -295,13 +316,9 @@ func walkPath(path string, triviaList map[string]*Trivia, categoryList map[strin
 
 			switch {
 			case !node.IsDir() && (extension == "" || filepath.Ext(node.Name()) == extension):
-				t, c := loadFromFile(fullPath, triviaList, categoryList, errorChannel)
-				triviaIndex = append(triviaIndex, t...)
-				categoryIndex = append(categoryIndex, c...)
+				loadFromFile(fullPath, index, list, errorChannel)
 			case node.IsDir() && recursive:
-				t, c := walkPath(fullPath, triviaList, categoryList, errorChannel)
-				triviaIndex = append(triviaIndex, t...)
-				categoryIndex = append(categoryIndex, c...)
+				walkPath(fullPath, index, list, errorChannel)
 			}
 		}
 	}
@@ -309,9 +326,7 @@ func walkPath(path string, triviaList map[string]*Trivia, categoryList map[strin
 	return triviaIndex, categoryIndex
 }
 
-func loadFromFile(path string, triviaList map[string]*Trivia, categoryList map[string][]*Trivia, errorChannel chan<- error) ([]string, []string) {
-	triviaIndex, categoryIndex := []string{}, []string{}
-
+func loadFromFile(path string, index map[Category][]QuestionId, list map[QuestionId]*Trivia, errorChannel chan<- error) {
 	f, err := os.Open(path)
 	if err != nil {
 		errorChannel <- err
@@ -339,7 +354,8 @@ func loadFromFile(path string, triviaList map[string]*Trivia, categoryList map[s
 			continue
 		}
 
-		var question, answer, category string
+		var question, answer string
+		var category Category
 
 		split := strings.Split(line, "|")
 
@@ -351,7 +367,7 @@ func loadFromFile(path string, triviaList map[string]*Trivia, categoryList map[s
 		case len(split) == 3:
 			question = strings.TrimSpace(split[0])
 			answer = strings.TrimSpace(split[1])
-			category = strings.TrimSpace(split[2])
+			category = Category(strings.TrimSpace(split[2]))
 		default:
 			if verbose {
 				fmt.Printf("%s | Skipped invalid entry at %s:%d\n",
@@ -367,7 +383,7 @@ func loadFromFile(path string, triviaList map[string]*Trivia, categoryList map[s
 
 		id := t.getId()
 
-		_, exists := triviaList[id]
+		_, exists := list[id]
 		if exists {
 			if verbose {
 				fmt.Printf("%s | Skipped duplicate entry at %s:%d\n",
@@ -379,51 +395,36 @@ func loadFromFile(path string, triviaList map[string]*Trivia, categoryList map[s
 			continue
 		}
 
-		categoryList[category] = append(categoryList[category], t)
+		index[category] = append(index[category], id)
 
-		triviaIndex = append(triviaIndex, id)
-		triviaList[id] = t
+		list[id] = t
 	}
-
-	for category := range categoryList {
-		categoryIndex = append(categoryIndex, category)
-	}
-
-	return triviaIndex, categoryIndex
 }
 
-func loadQuestions(paths []string, questions *Questions, categories *Categories, errorChannel chan<- error) (int, int) {
+func loadQuestions(paths []string, questions *Questions, errorChannel chan<- error) (int, int) {
 	startTime := time.Now()
 
-	triviaIndex := []string{}
-	triviaList := map[string]*Trivia{}
-
-	categoryIndex := []string{}
-	categoryList := map[string][]*Trivia{}
+	index := map[Category][]QuestionId{}
+	list := map[QuestionId]*Trivia{}
 
 	for i := range paths {
-		t, c := walkPath(paths[i], triviaList, categoryList, errorChannel)
-		triviaIndex = append(triviaIndex, t...)
-		categoryIndex = append(categoryIndex, c...)
+		walkPath(paths[i], index, list, errorChannel)
 	}
 
-	if len(triviaIndex) < 1 || len(triviaList) < 1 {
+	if len(index) < 1 || len(list) < 1 {
 		fmt.Printf("%s | No supported files found.\n", startTime.Format(logDate))
 	}
 
+	for i := range index {
+		slices.Sort(index[i])
+	}
+
 	questions.mu.Lock()
-	questions.index = triviaIndex
-	questions.list = triviaList
+	questions.index = index
+	questions.list = list
+	categoryCount := len(questions.index)
 	triviaCount := len(questions.list)
 	questions.mu.Unlock()
-
-	slices.Sort(categoryIndex)
-
-	categories.mu.Lock()
-	categories.index = categoryIndex
-	categories.list = categoryList
-	categoryCount := len(categories.list)
-	categories.mu.Unlock()
 
 	fmt.Printf("%s | Loaded %d questions across %d categories in %s\n",
 		startTime.Format(logDate),
@@ -439,14 +440,14 @@ func serveHome(questions *Questions) httprouter.Handle {
 		newUrl := fmt.Sprintf("%s//%s/q/%s",
 			r.URL.Scheme,
 			r.Host,
-			questions.getRandomId(),
+			questions.getRandomId(r),
 		)
 
 		http.Redirect(w, r, newUrl, http.StatusSeeOther)
 	}
 }
 
-func serveQuestion(questions *Questions, colors map[string]Color, tpl *template.Template, errorChannel chan<- error) httprouter.Handle {
+func serveQuestion(questions *Questions, colors map[Category]Color, tpl *template.Template, errorChannel chan<- error) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 		startTime := time.Now()
 
@@ -461,7 +462,7 @@ func serveQuestion(questions *Questions, colors map[string]Color, tpl *template.
 
 		color := DefaultColor
 
-		q := questions.getTrivia(path.Base(r.URL.Path))
+		q := questions.getTrivia(QuestionId(path.Base(r.URL.Path)))
 
 		if q == nil || len(questions.index) < 1 {
 			color = ErrorColor
@@ -481,7 +482,7 @@ func serveQuestion(questions *Questions, colors map[string]Color, tpl *template.
 			Theme:    getTheme(r),
 			Question: "",
 			Answer:   "",
-			Category: "",
+			Category: Category(""),
 			Color:    color.Hex,
 		}
 
@@ -511,9 +512,9 @@ func serveQuestion(questions *Questions, colors map[string]Color, tpl *template.
 	}
 }
 
-func serveCategories(categories *Categories, errorChannel chan<- error) httprouter.Handle {
+func serveCategories(questions *Questions, errorChannel chan<- error) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-		_, err := w.Write(categories.Bytes())
+		_, err := w.Write(questions.CategoryBytes())
 		if err != nil {
 			errorChannel <- err
 
@@ -522,7 +523,7 @@ func serveCategories(categories *Categories, errorChannel chan<- error) httprout
 	}
 }
 
-func registerQuestions(mux *httprouter.Router, colors map[string]Color, questions *Questions, categories *Categories, errorChannel chan<- error) {
+func registerQuestions(mux *httprouter.Router, colors map[Category]Color, questions *Questions, errorChannel chan<- error) {
 	template, err := template.New("question").Parse(getQuestionTemplate())
 	if err != nil {
 		errorChannel <- err
@@ -532,5 +533,5 @@ func registerQuestions(mux *httprouter.Router, colors map[string]Color, question
 
 	mux.GET("/", serveHome(questions))
 	mux.GET("/q/*id", serveQuestion(questions, colors, template, errorChannel))
-	mux.GET("/categories", serveCategories(categories, errorChannel))
+	mux.GET("/categories", serveCategories(questions, errorChannel))
 }

@@ -137,16 +137,11 @@ func servePage(args []string) error {
 	}()
 
 	questions := &Questions{
-		index: []string{},
-		list:  map[string]*Trivia{},
+		index: map[Category][]QuestionId{},
+		list:  map[QuestionId]*Trivia{},
 	}
 
-	categories := &Categories{
-		index: []string{},
-		list:  map[string][]*Trivia{},
-	}
-
-	loadQuestions(paths, questions, categories, errorChannel)
+	loadQuestions(paths, questions, errorChannel)
 
 	registerFavicons(mux, errorChannel)
 
@@ -163,21 +158,21 @@ func servePage(args []string) error {
 	}
 
 	if reload {
-		registerReload(mux, paths, questions, categories, errorChannel)
+		registerReload(mux, paths, questions, errorChannel)
 	}
 
 	if reloadInterval != "" {
 		quit := make(chan struct{})
 		defer close(quit)
 
-		registerReloadInterval(paths, questions, categories, quit, errorChannel)
+		registerReloadInterval(paths, questions, quit, errorChannel)
 	}
 
 	colors := loadColors(colorsFile, errorChannel)
 
-	registerConfigPage(mux, categories, errorChannel)
+	registerConfigPage(mux, questions, errorChannel)
 
-	registerQuestions(mux, colors, questions, categories, errorChannel)
+	registerQuestions(mux, colors, questions, errorChannel)
 
 	mux.GET("/version", serveVersion(errorChannel))
 
@@ -185,6 +180,8 @@ func servePage(args []string) error {
 		fmt.Printf("%s | Listening on https://%s/\n",
 			time.Now().Format(logDate),
 			srv.Addr)
+
+		secure = true
 
 		err = srv.ListenAndServeTLS(tlsCert, tlsKey)
 	} else {

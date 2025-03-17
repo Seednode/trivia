@@ -10,6 +10,7 @@ import (
 	"html/template"
 	"io"
 	"net/http"
+	"slices"
 	"strings"
 	"time"
 
@@ -62,7 +63,7 @@ func getConfigTemplate() string {
 </html>`
 }
 
-func serveConfigPage(categories *Categories, tpl *template.Template, errorChannel chan<- error) httprouter.Handle {
+func serveConfigPage(questions *Questions, tpl *template.Template, errorChannel chan<- error) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 		startTime := time.Now()
 
@@ -81,8 +82,14 @@ func serveConfigPage(categories *Categories, tpl *template.Template, errorChanne
 
 		var toggles strings.Builder
 
-		for _, j := range categories.Strings() {
-			toggles.WriteString(fmt.Sprintf("        <li><label><input type=\"checkbox\" name=\"%s\" checked>%s</label></li>\n", j, j))
+		selected := getCategories(r, questions)
+
+		for _, j := range questions.CategoryStrings() {
+			if slices.Contains(selected, j) {
+				toggles.WriteString(fmt.Sprintf("        <li><label><input type=\"checkbox\" name=\"%s\" checked>%s</label></li>\n", j, j))
+			} else {
+				toggles.WriteString(fmt.Sprintf("        <li><label><input type=\"checkbox\" name=\"%s\">%s</label></li>\n", j, j))
+			}
 		}
 
 		categoryToggle := CategoryToggle{
@@ -98,8 +105,10 @@ func serveConfigPage(categories *Categories, tpl *template.Template, errorChanne
 	}
 }
 
-func serveCategoryPage(categories *Categories, errorChannel chan<- error) httprouter.Handle {
+func serveCategoryPage(questions *Questions, errorChannel chan<- error) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+		startTime := time.Now()
+
 		data, err := io.ReadAll(r.Body)
 		if err != nil {
 			errorChannel <- err
@@ -115,36 +124,31 @@ func serveCategoryPage(categories *Categories, errorChannel chan<- error) httpro
 			return
 		}
 
-		// iterate through returned categories, checking for matches with existing list on server
-		// then, set cookie to only display from those categories
-		// finally, add new function to only return potential trivia from selection categories,
-		// loaded from cookie
-		enabled := categories.Strings()
+		enabled := questions.CategoryStrings()
 
-		var final []string
+		c := []string{}
 
 		for _, s := range selected.Categories {
 			for _, e := range enabled {
 				if s == e {
-					final = append(final, s)
+					c = append(c, s)
 				}
 			}
 		}
 
-		fmt.Printf("%v\n", final)
+		setCookie("enabledCategories", strings.Join(c, ","), w)
 
-		resp, err := json.Marshal(final)
-		if err != nil {
-			errorChannel <- err
-
-			return
+		if verbose {
+			fmt.Printf("%s | %s => Selected %d/%d categories\n",
+				startTime.Format(logDate),
+				realIP(r),
+				len(c),
+				len(enabled))
 		}
-
-		fmt.Printf("%v\n", resp)
 	}
 }
 
-func registerConfigPage(mux *httprouter.Router, categories *Categories, errorChannel chan<- error) {
+func registerConfigPage(mux *httprouter.Router, questions *Questions, errorChannel chan<- error) {
 	template, err := template.New("config").Parse(getConfigTemplate())
 	if err != nil {
 		errorChannel <- err
@@ -152,6 +156,6 @@ func registerConfigPage(mux *httprouter.Router, categories *Categories, errorCha
 		return
 	}
 
-	mux.GET("/config", serveConfigPage(categories, template, errorChannel))
-	mux.POST("/config/categories", serveCategoryPage(categories, errorChannel))
+	mux.GET("/config", serveConfigPage(questions, template, errorChannel))
+	mux.POST("/config/categories", serveCategoryPage(questions, errorChannel))
 }

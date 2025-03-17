@@ -33,12 +33,14 @@ func serveExport(questions *Questions, errorChannel chan<- error) httprouter.Han
 		defer questions.mu.RUnlock()
 
 		for i := range questions.index {
-			entry := questions.list[questions.index[i]]
-			_, err := w.Write(fmt.Appendf(nil, "Category: %s\nQuestion: %s\nAnswer: %s\n\n", entry.Category, entry.Question, entry.Answer))
-			if err != nil {
-				errorChannel <- err
+			for j := range questions.index[i] {
+				entry := questions.list[questions.index[i][j]]
+				_, err := w.Write(fmt.Appendf(nil, "Category: %s\nQuestion: %s\nAnswer: %s\n\n", entry.Category, entry.Question, entry.Answer))
+				if err != nil {
+					errorChannel <- err
 
-				return
+					return
+				}
 			}
 		}
 	}

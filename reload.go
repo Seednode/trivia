@@ -12,7 +12,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-func registerReloadInterval(paths []string, questions *Questions, categories *Categories, quit <-chan struct{}, errorChannel chan<- error) {
+func registerReloadInterval(paths []string, questions *Questions, quit <-chan struct{}, errorChannel chan<- error) {
 	interval, err := time.ParseDuration(reloadInterval)
 	if err != nil {
 		errorChannel <- err
@@ -37,7 +37,7 @@ func registerReloadInterval(paths []string, questions *Questions, categories *Ca
 					fmt.Printf("%s | Started scheduled rebuild\n", time.Now().Format(logDate))
 				}
 
-				loadQuestions(paths, questions, categories, errorChannel)
+				loadQuestions(paths, questions, errorChannel)
 
 				if verbose {
 					fmt.Printf("%s | Next scheduled rebuild will run at %s\n", time.Now().Format(logDate), next.Format(logDate))
@@ -51,7 +51,7 @@ func registerReloadInterval(paths []string, questions *Questions, categories *Ca
 	}()
 }
 
-func serveReload(paths []string, questions *Questions, categories *Categories, errorChannel chan<- error) httprouter.Handle {
+func serveReload(paths []string, questions *Questions, errorChannel chan<- error) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 		startTime := time.Now()
 
@@ -66,7 +66,7 @@ func serveReload(paths []string, questions *Questions, categories *Categories, e
 				r.RequestURI)
 		}
 
-		triviaCount, categoryCount := loadQuestions(paths, questions, categories, errorChannel)
+		triviaCount, categoryCount := loadQuestions(paths, questions, errorChannel)
 
 		fmt.Printf("%s | Loaded %d questions spanning %d categories in %s\n",
 			startTime.Format(logDate),
@@ -83,6 +83,6 @@ func serveReload(paths []string, questions *Questions, categories *Categories, e
 	}
 }
 
-func registerReload(mux *httprouter.Router, paths []string, questions *Questions, categories *Categories, errorChannel chan<- error) {
-	mux.POST("/reload", serveReload(paths, questions, categories, errorChannel))
+func registerReload(mux *httprouter.Router, paths []string, questions *Questions, errorChannel chan<- error) {
+	mux.POST("/reload", serveReload(paths, questions, errorChannel))
 }
