@@ -57,6 +57,7 @@ type Question struct {
 	Answer   any
 	Category Category
 	Color    string
+	Settings any
 }
 
 type Trivia struct {
@@ -163,8 +164,8 @@ func getQuestionTemplate() string {
     <meta name="Description" content="A very basic trivia webapp." />
     <title>Trivia v{{.Version}}</title>
     <link rel="stylesheet" href="/css/{{.Theme}}.css" />
+	<link rel="stylesheet" href="/css/trivia.css" />
     <style>.footer {background-color:{{.Color}};}</style>
-	<script src="/js/toggleTheme.js"></script>
     <script src="/js/toggleAnswer.js" defer></script>
     <link rel="apple-touch-icon" sizes="180x180" href="/favicons/apple-touch-icon.webp" />
     <link rel="icon" type="image/webp" sizes="32x32" href="/favicons/favicon-32x32.webp" />
@@ -181,7 +182,7 @@ func getQuestionTemplate() string {
     <meta property="og:image" content="/favicons/apple-touch-icon.webp" />
   </head>
   <body>
-    <p id="toggle-theme">Toggle dark mode</p>
+  {{.Settings}}
     <p id="hint">(Click on the question to load a new one)</p>
     <a href="/"><p id="question">{{.Question}}</p></a>
     <button id="toggle-answer">Show Answer</button>
@@ -484,16 +485,17 @@ func serveQuestion(questions *Questions, colors map[Category]Color, tpl *templat
 			Answer:   "",
 			Category: Category(""),
 			Color:    color.Hex,
+			Settings: "",
 		}
 
 		switch {
 		case len(questions.index) < 1:
 			question.Question = "How do I load questions into Trivia?"
-			question.Answer = template.HTML("See <a id='help' href='https://github.com/Seednode/trivia?tab=readme-ov-file#file-format'>the docs</a>.")
+			question.Answer = template.HTML("See <a id=\"help\" href=\"https://github.com/Seednode/trivia?tab=readme-ov-file#file-format\">the docs</a>.")
 			question.Category = "Usage"
 		case q == nil:
 			question.Question = "Are you sure this URL is correct?"
-			question.Answer = template.HTML("If not, please go back to the <a id='help' href='/'>homepage</a> and try again.")
+			question.Answer = template.HTML("If not, please go back to the <a id=\"help\" href=\"/\">homepage</a> and try again.")
 			question.Category = "Error"
 		case html:
 			question.Question = template.HTML(q.Question)
@@ -503,6 +505,10 @@ func serveQuestion(questions *Questions, colors map[Category]Color, tpl *templat
 			question.Question = q.Question
 			question.Answer = q.Answer
 			question.Category = q.Category
+		}
+
+		if settings {
+			question.Settings = template.HTML("<p id=\"settings-link\"><a href=\"/settings\">Settings</a></p>")
 		}
 
 		err := tpl.Execute(w, question)

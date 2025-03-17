@@ -27,7 +27,7 @@ type CategoryToggle struct {
 	Categories any
 }
 
-func getConfigTemplate() string {
+func getSettingsTemplate() string {
 	return `<!DOCTYPE html>
 <html lang="en-US">
   <head>
@@ -36,7 +36,9 @@ func getConfigTemplate() string {
     <meta name="Description" content="A very basic trivia webapp." />
     <title>Trivia v{{.Version}}</title>
     <script src="/js/toggleCategories.js" defer></script>
+	<script src="/js/toggleTheme.js" defer></script>
     <link rel="stylesheet" href="/css/{{.Theme}}.css" />
+	<link rel="stylesheet" href="/css/trivia.css" />
     <link rel="apple-touch-icon" sizes="180x180" href="/favicons/apple-touch-icon.webp" />
     <link rel="icon" type="image/webp" sizes="32x32" href="/favicons/favicon-32x32.webp" />
     <link rel="icon" type="image/webp" sizes="16x16" href="/favicons/favicon-16x16.webp" />
@@ -52,29 +54,31 @@ func getConfigTemplate() string {
     <meta property="og:image" content="/favicons/apple-touch-icon.webp" />
   </head>
   <body>
-    <div class="categories">
-	  <h2>Categories</h2>
-	  <ul>
+    <p id="settings-link"><a href="/">Back to homepage</a></p>
+	<div class="settings-container">
+      <div class="settings-item">
+	    <h2>Categories</h2>
+	    <ul>
 {{.Categories}}
-      </ul>
-	  <input id="count-categories" type="submit"></input>
-    </div>
+        </ul>
+	    <input id="set-categories" type="submit"></input>
+      </div>
+	  <div class="settings-item">
+	    <h2>Theme</h2>
+	      <input type="radio" id="light-mode" name="theme" value="lightMode" checked />
+		  <label for="light-mode">Light mode</label><br />
+		  <input type="radio" id="dark-mode" name="theme" value="darkMode" />
+		  <label for="dark-mode">Dark mode</label><br />
+	  	<input id="set-theme" type="submit"></input>
+	  </div>
+	</div>
   </body>
 </html>`
 }
 
-func serveConfigPage(questions *Questions, tpl *template.Template, errorChannel chan<- error) httprouter.Handle {
+func serveSettingsPage(questions *Questions, tpl *template.Template, errorChannel chan<- error) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-		startTime := time.Now()
-
 		w.Header().Set("Content-Type", "text/html;charset=UTF-8")
-
-		if verbose {
-			fmt.Printf("%s | %s => %s\n",
-				startTime.Format(logDate),
-				realIP(r),
-				r.RequestURI)
-		}
 
 		w.Header().Set("Content-Security-Policy", "default-src 'self';")
 
@@ -86,9 +90,9 @@ func serveConfigPage(questions *Questions, tpl *template.Template, errorChannel 
 
 		for _, j := range questions.CategoryStrings() {
 			if slices.Contains(selected, j) {
-				toggles.WriteString(fmt.Sprintf("        <li><label><input type=\"checkbox\" name=\"%s\" checked>%s</label></li>\n", j, j))
+				toggles.WriteString(fmt.Sprintf("          <li><label><input type=\"checkbox\" name=\"%s\" checked>%s</label></li>\n", j, j))
 			} else {
-				toggles.WriteString(fmt.Sprintf("        <li><label><input type=\"checkbox\" name=\"%s\">%s</label></li>\n", j, j))
+				toggles.WriteString(fmt.Sprintf("          <li><label><input type=\"checkbox\" name=\"%s\">%s</label></li>\n", j, j))
 			}
 		}
 
@@ -105,7 +109,7 @@ func serveConfigPage(questions *Questions, tpl *template.Template, errorChannel 
 	}
 }
 
-func serveCategoryPage(questions *Questions, errorChannel chan<- error) httprouter.Handle {
+func serveCategorySettings(questions *Questions, errorChannel chan<- error) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 		startTime := time.Now()
 
@@ -139,23 +143,40 @@ func serveCategoryPage(questions *Questions, errorChannel chan<- error) httprout
 		setCookie("enabledCategories", strings.Join(c, ","), w)
 
 		if verbose {
-			fmt.Printf("%s | %s => Selected %d/%d categories\n",
+			fmt.Printf("%s | %s => %s (Selected %d/%d categories)\n",
 				startTime.Format(logDate),
 				realIP(r),
+				r.RequestURI,
 				len(c),
 				len(enabled))
 		}
 	}
 }
 
-func registerConfigPage(mux *httprouter.Router, questions *Questions, errorChannel chan<- error) {
-	template, err := template.New("config").Parse(getConfigTemplate())
+func serveThemeSettings() httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+		startTime := time.Now()
+
+		setCookie("colorTheme", p.ByName("theme"), w)
+
+		if verbose {
+			fmt.Printf("%s | %s => %s\n",
+				startTime.Format(logDate),
+				realIP(r),
+				r.RequestURI)
+		}
+	}
+}
+
+func registerSettingsPage(mux *httprouter.Router, questions *Questions, errorChannel chan<- error) {
+	template, err := template.New("settings").Parse(getSettingsTemplate())
 	if err != nil {
 		errorChannel <- err
 
 		return
 	}
 
-	mux.GET("/config", serveConfigPage(questions, template, errorChannel))
-	mux.POST("/config/categories", serveCategoryPage(questions, errorChannel))
+	mux.GET("/settings", serveSettingsPage(questions, template, errorChannel))
+	mux.POST("/settings/categories", serveCategorySettings(questions, errorChannel))
+	mux.POST("/settings/theme/:theme", serveThemeSettings())
 }

@@ -170,7 +170,9 @@ func servePage(args []string) error {
 
 	colors := loadColors(colorsFile, errorChannel)
 
-	registerConfigPage(mux, questions, errorChannel)
+	if settings {
+		registerSettingsPage(mux, questions, errorChannel)
+	}
 
 	registerQuestions(mux, colors, questions, errorChannel)
 
@@ -180,8 +182,6 @@ func servePage(args []string) error {
 		fmt.Printf("%s | Listening on https://%s/\n",
 			time.Now().Format(logDate),
 			srv.Addr)
-
-		secure = true
 
 		err = srv.ListenAndServeTLS(tlsCert, tlsKey)
 	} else {

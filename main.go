@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	ReleaseVersion string = "4.0.0"
+	ReleaseVersion string = "5.0.0"
 )
 
 var (
@@ -31,8 +31,7 @@ var (
 	recursive      bool
 	reload         bool
 	reloadInterval string
-	secret         string
-	secure         bool
+	settings       bool
 	tlsCert        string
 	tlsKey         string
 	verbose        bool
@@ -69,7 +68,7 @@ func main() {
 	cmd.Flags().BoolVar(&reload, "reload", false, "allow live-reload of questions")
 	cmd.Flags().StringVar(&reloadInterval, "reload-interval", "", "interval at which to rebuild question list (e.g. \"5m\" or \"1h\")")
 	cmd.Flags().BoolVarP(&recursive, "recursive", "r", false, "recurse into directories")
-	cmd.Flags().StringVar(&secret, "secret", "", "secret used for signed cookies")
+	cmd.Flags().BoolVar(&settings, "settings", true, "enable settings page at /settings")
 	cmd.Flags().StringVar(&tlsCert, "tls-cert", "", "path to TLS certificate")
 	cmd.Flags().StringVar(&tlsKey, "tls-key", "", "path to TLS keyfile")
 	cmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "log requests to stdout")

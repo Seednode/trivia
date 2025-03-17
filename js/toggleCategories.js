@@ -1,4 +1,4 @@
-function showCategoryCount() {
+function setCategories() {
     selected = document.querySelectorAll('input[type="checkbox"]:checked');
     total = document.querySelectorAll('input[type="checkbox"]');
 
@@ -15,17 +15,13 @@ function showCategoryCount() {
     }
 
     let xhr = new XMLHttpRequest();
-    const currentUrl = window.location.href;
-    const categoriesUrl = currentUrl + "/categories";
-    xhr.open("POST", categoriesUrl, true);
+    xhr.open("POST", window.location.href + "/categories", true);
     xhr.setRequestHeader("Content-Type", "application/json");
     let data = JSON.stringify({ ...json });
     xhr.send(data);
-
-    alert("Selected " + selected.length + " out of " + total.length + " categories.")
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-    document.getElementById('count-categories')
-    .addEventListener('click', showCategoryCount);
+    document.getElementById('set-categories')
+    .addEventListener('click', setCategories);
 });

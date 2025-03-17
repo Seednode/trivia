@@ -113,6 +113,7 @@ Flags:
   -r, --recursive                recurse into directories
       --reload                   allow live-reload of questions
       --reload-interval string   interval at which to rebuild question list (e.g. "5m" or "1h")
+      --settings                 enable settings page at /settings (default true)
       --tls-cert string          path to TLS certificate
       --tls-key string           path to TLS keyfile
   -v, --verbose                  log requests to stdout

@@ -1,0 +1,147 @@
+html, body, div, p, a, button {
+    border: 0;
+    font: inherit;
+    font-size: 100%;
+    margin: 0;
+    padding: 0;
+    vertical-align: baseline;
+  }
+  
+  html {
+      background-color: var(--background);
+      color: var(--content);
+      font-family: -apple-system, system-ui, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+      font-size: clamp(var(--min), var(--val), var(--max));
+      --max: 2.5em;
+      --min: 1em;
+      --val: 2.5vw;
+      padding-top: 2rem;
+      text-align: center;
+      touch-action: manipulation;
+  }
+  
+  a {
+      all: unset;
+  }
+  
+  #help {
+      cursor: pointer;
+      text-decoration: underline;
+  }
+  
+  #hint {
+      color: var(--comment);
+      font-size: .75rem;
+      user-select: none;
+  }
+  
+  #settings-link {
+      cursor: pointer;
+      font-size: .5rem;
+      position: absolute;
+      right: .5rem;
+      top: .5rem;
+      user-select: none;
+  }
+
+  .footer {
+      bottom: 0;
+      color: var(--background);
+      left: 0;
+      padding-top: .75rem;
+      padding-bottom: .75rem;
+      position: fixed;
+      text-align: center;
+      user-select: none;
+      width: 100%;
+  }
+  
+  #question {
+      cursor: pointer;
+      line-height: 1.4;
+      margin-left: auto;
+      margin-right: auto;
+      max-width: 80%;
+      padding-top: 5vh;
+      padding-bottom: 5vh;
+  }
+  
+  #answer {
+      background: var(--highlight);
+      border-radius: 1rem;
+      display: none;
+      font-weight: 500;
+      margin-left: auto;
+      margin-right: auto;
+      margin-top: 6vh;
+      max-width: fit-content;
+      outline: solid;
+      padding: 1rem 2rem;
+      text-align: center;
+  }
+  
+  #toggle-answer { 
+      appearance: none;
+      background-color: var(--emphasis);
+      border-radius: 1rem;
+      box-sizing: border-box;
+      color: var(--highlight);
+      cursor: pointer;
+      display: inline-block;
+      font-size: inherit;
+      font-weight: 500;
+      padding: .5rem .75rem;
+      position: relative;
+      transition: background-color 0.2s cubic-bezier(0.3, 0, 0.5, 1);
+      user-select: none;
+      vertical-align: middle;
+      -webkit-user-select: none;
+      word-wrap: break-word;
+  }
+  
+  #toggle-answer:active {
+      background-color: var(--content);
+      -webkit-box-shadow: inset 0px 0px 5px var(--highlight);
+         -moz-box-shadow: inset 0px 0px 5px var(--highlight);
+              box-shadow: inset 0px 0px 5px var(--highlight);
+       outline: none;
+    }
+  
+  li, ul {
+      text-align: left;
+      margin: 0;
+      padding: 0;
+  }
+  
+  ul {
+      line-height: 1.5;
+      list-style-type: none;
+  }
+  
+  input {
+      margin-right: 8px;
+  }
+  
+  h2 {
+      margin: 4px;
+      text-align: left;
+      text-decoration: underline;
+  }
+
+  div {
+      margin-left: auto;
+      margin-right: auto;
+      width: fit-content;
+  }
+
+  .settings-container {
+    display: flex;
+    flex: 1;
+    gap: 1rem;
+  }
+
+  .settings-item {
+    border-style: ridge; 
+    border-width: 5px;
+    padding: 20px;
+  }
