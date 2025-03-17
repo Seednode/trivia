@@ -18,6 +18,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"syscall"
@@ -78,12 +79,6 @@ type Questions struct {
 	list  map[string]*Trivia
 }
 
-type Categories struct {
-	mu    sync.RWMutex
-	index []string
-	list  map[string][]*Trivia
-}
-
 func (q *Questions) getRandomId() string {
 	q.mu.RLock()
 	if len(q.index) < 1 {
@@ -108,7 +103,35 @@ func (q *Questions) getTrivia(path string) *Trivia {
 	return t
 }
 
-func getTemplate() string {
+type Categories struct {
+	mu    sync.RWMutex
+	index []string
+	list  map[string][]*Trivia
+}
+
+func (c *Categories) Bytes() []byte {
+	var list []byte
+
+	c.mu.RLock()
+	for _, category := range c.index {
+		list = fmt.Appendf(list, "%s\n", category)
+	}
+	c.mu.RUnlock()
+
+	return list
+}
+
+func (c *Categories) Strings() []string {
+	var list []string
+
+	c.mu.RLock()
+	list = append(list, c.index...)
+	c.mu.RUnlock()
+
+	return list
+}
+
+func getQuestionTemplate() string {
 	return `<!DOCTYPE html>
 <html lang="en-US">
   <head>
@@ -253,14 +276,16 @@ func validatePaths(args []string) ([]string, error) {
 	return paths, nil
 }
 
-func walkPath(path string, triviaList map[string]*Trivia, categoryList map[string][]*Trivia, errorChannel chan<- error) []string {
-	triviaIndex := []string{}
+func walkPath(path string, triviaList map[string]*Trivia, categoryList map[string][]*Trivia, errorChannel chan<- error) ([]string, []string) {
+	triviaIndex, categoryIndex := []string{}, []string{}
 
 	nodes, err := os.ReadDir(path)
 	switch {
 	case errors.Is(err, syscall.ENOTDIR):
 		if extension == "" || filepath.Ext(path) == extension {
-			triviaIndex = append(triviaIndex, loadFromFile(path, triviaList, categoryList, errorChannel)...)
+			t, c := loadFromFile(path, triviaList, categoryList, errorChannel)
+			triviaIndex = append(triviaIndex, t...)
+			categoryIndex = append(categoryIndex, c...)
 		}
 	case err != nil:
 		errorChannel <- err
@@ -270,18 +295,22 @@ func walkPath(path string, triviaList map[string]*Trivia, categoryList map[strin
 
 			switch {
 			case !node.IsDir() && (extension == "" || filepath.Ext(node.Name()) == extension):
-				triviaIndex = append(triviaIndex, loadFromFile(fullPath, triviaList, categoryList, errorChannel)...)
+				t, c := loadFromFile(fullPath, triviaList, categoryList, errorChannel)
+				triviaIndex = append(triviaIndex, t...)
+				categoryIndex = append(categoryIndex, c...)
 			case node.IsDir() && recursive:
-				triviaIndex = append(triviaIndex, walkPath(fullPath, triviaList, categoryList, errorChannel)...)
+				t, c := walkPath(fullPath, triviaList, categoryList, errorChannel)
+				triviaIndex = append(triviaIndex, t...)
+				categoryIndex = append(categoryIndex, c...)
 			}
 		}
 	}
 
-	return triviaIndex
+	return triviaIndex, categoryIndex
 }
 
-func loadFromFile(path string, triviaList map[string]*Trivia, categoryList map[string][]*Trivia, errorChannel chan<- error) []string {
-	triviaIndex := []string{}
+func loadFromFile(path string, triviaList map[string]*Trivia, categoryList map[string][]*Trivia, errorChannel chan<- error) ([]string, []string) {
+	triviaIndex, categoryIndex := []string{}, []string{}
 
 	f, err := os.Open(path)
 	if err != nil {
@@ -356,7 +385,11 @@ func loadFromFile(path string, triviaList map[string]*Trivia, categoryList map[s
 		triviaList[id] = t
 	}
 
-	return triviaIndex
+	for category := range categoryList {
+		categoryIndex = append(categoryIndex, category)
+	}
+
+	return triviaIndex, categoryIndex
 }
 
 func loadQuestions(paths []string, questions *Questions, categories *Categories, errorChannel chan<- error) (int, int) {
@@ -369,7 +402,9 @@ func loadQuestions(paths []string, questions *Questions, categories *Categories,
 	categoryList := map[string][]*Trivia{}
 
 	for i := range paths {
-		triviaIndex = append(triviaIndex, walkPath(paths[i], triviaList, categoryList, errorChannel)...)
+		t, c := walkPath(paths[i], triviaList, categoryList, errorChannel)
+		triviaIndex = append(triviaIndex, t...)
+		categoryIndex = append(categoryIndex, c...)
 	}
 
 	if len(triviaIndex) < 1 || len(triviaList) < 1 {
@@ -381,6 +416,8 @@ func loadQuestions(paths []string, questions *Questions, categories *Categories,
 	questions.list = triviaList
 	triviaCount := len(questions.list)
 	questions.mu.Unlock()
+
+	slices.Sort(categoryIndex)
 
 	categories.mu.Lock()
 	categories.index = categoryIndex
@@ -474,8 +511,19 @@ func serveQuestion(questions *Questions, colors map[string]Color, tpl *template.
 	}
 }
 
-func registerQuestions(mux *httprouter.Router, colors map[string]Color, questions *Questions, errorChannel chan<- error) {
-	template, err := template.New("question").Parse(getTemplate())
+func serveCategories(categories *Categories, errorChannel chan<- error) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+		_, err := w.Write(categories.Bytes())
+		if err != nil {
+			errorChannel <- err
+
+			return
+		}
+	}
+}
+
+func registerQuestions(mux *httprouter.Router, colors map[string]Color, questions *Questions, categories *Categories, errorChannel chan<- error) {
+	template, err := template.New("question").Parse(getQuestionTemplate())
 	if err != nil {
 		errorChannel <- err
 
@@ -484,4 +532,5 @@ func registerQuestions(mux *httprouter.Router, colors map[string]Color, question
 
 	mux.GET("/", serveHome(questions))
 	mux.GET("/q/*id", serveQuestion(questions, colors, template, errorChannel))
+	mux.GET("/categories", serveCategories(categories, errorChannel))
 }

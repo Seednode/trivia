@@ -114,3 +114,37 @@ a {
             box-shadow: inset 0px 0px 5px var(--highlight);
      outline: none;
   }
+
+li, ul {
+    text-align: left;
+    margin: 0;
+    padding: 0;
+}
+
+ul {
+    line-height: 1.5;
+    list-style-type: none;
+}
+
+input {
+    margin-right: 8px;
+}
+
+h2 {
+    margin: 4px;
+    text-align: left;
+    text-decoration: underline;
+}
+
+.categories {
+    border-style: ridge; 
+    border-width: 5px;
+    padding: 20px;
+    max-width: 40%;
+}
+
+div {
+    margin-left: auto;
+    margin-right: auto;
+    width: fit-content;
+}

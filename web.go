@@ -175,7 +175,9 @@ func servePage(args []string) error {
 
 	colors := loadColors(colorsFile, errorChannel)
 
-	registerQuestions(mux, colors, questions, errorChannel)
+	registerConfigPage(mux, categories, errorChannel)
+
+	registerQuestions(mux, colors, questions, categories, errorChannel)
 
 	mux.GET("/version", serveVersion(errorChannel))
 
