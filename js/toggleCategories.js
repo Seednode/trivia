@@ -19,6 +19,8 @@ function setCategories() {
     xhr.setRequestHeader("Content-Type", "application/json");
     let data = JSON.stringify({ ...json });
     xhr.send(data);
+
+    alert("Selected " + selected.length + " out of " + total.length + " categories.")
 }
 
 document.addEventListener('DOMContentLoaded', function () {
