@@ -57,12 +57,14 @@ func getSettingsTemplate() string {
     <p id="settings-link"><a href="/">Back to homepage</a></p>
 	<div class="settings-container">
       <div class="settings-item">
-	    <h2>Categories</h2>
-	    <ul>
+	    <div class="settings-scrollable">
+	      <h2>Categories</h2>
+	      <ul>
 {{.Categories}}
-        </ul>
-	    <input id="set-categories" type="submit"></input>
-      </div>
+          </ul>
+	      <input id="set-categories" type="submit"></input>
+        </div>
+	  </div>
 	  <div class="settings-item">
 	    <h2>Theme</h2>
 	      <input type="radio" id="light-mode" name="theme" value="lightMode" checked />

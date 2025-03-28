@@ -24,3 +24,16 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('set-theme')
     .addEventListener('click', toggleTheme);
 })
+
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+}
+
+var colorTheme = getCookie("colorTheme");
+if (colorTheme == "lightMode") {
+    document.getElementById('light-mode').checked - true;
+} else {
+    document.getElementById('dark-mode').checked = true;
+}
