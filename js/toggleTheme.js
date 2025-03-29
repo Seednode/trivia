@@ -33,7 +33,7 @@ function getCookie(name) {
 
 var colorTheme = getCookie("colorTheme");
 if (colorTheme == "lightMode") {
-    document.getElementById('light-mode').checked - true;
+    document.getElementById('light-mode').checked = true;
 } else {
     document.getElementById('dark-mode').checked = true;
 }
