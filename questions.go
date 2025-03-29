@@ -29,8 +29,9 @@ import (
 )
 
 type Color struct {
-	Hex  string
-	Hash string
+	Abbreviation string
+	Hex          string
+	Hash         string
 }
 
 const (
@@ -51,13 +52,14 @@ var (
 )
 
 type Question struct {
-	Version  string
-	Theme    string
-	Question any
-	Answer   any
-	Category Category
-	Color    string
-	Settings any
+	Abbreviation any
+	Version      string
+	Theme        string
+	Question     any
+	Answer       any
+	Category     Category
+	Color        string
+	Settings     any
 }
 
 type Trivia struct {
@@ -187,7 +189,7 @@ func getQuestionTemplate() string {
     <a href="/"><p id="question">{{.Question}}</p></a>
     <button id="toggle-answer">Show Answer</button>
     <div id="answer"><p>{{.Answer}}</p></div>
-    <div class="footer"><p>{{.Category}}</p></div>
+    <div class="footer"><p>{{.Category}} ({{.Abbreviation}})</p></div>
   </body>
 </html>`
 }
@@ -233,7 +235,19 @@ func loadColors(path string, errorChannel chan<- error) map[Category]Color {
 
 		split := strings.Split(line, "|")
 
-		if len(split) != 2 {
+		var category Category
+		var abbreviation, hex string
+
+		switch len(split) {
+		case 2:
+			abbreviation = ""
+			category = Category(strings.TrimSpace(split[0]))
+			hex = strings.TrimSpace(split[1])
+		case 3:
+			abbreviation = strings.TrimSpace(split[2])
+			category = Category(strings.TrimSpace(split[0]))
+			hex = strings.TrimSpace(split[1])
+		default:
 			if verbose {
 				fmt.Printf("Invalid color mapping: `%s`. Skipping.\n", line)
 			}
@@ -241,12 +255,10 @@ func loadColors(path string, errorChannel chan<- error) map[Category]Color {
 			continue
 		}
 
-		category := Category(strings.TrimSpace(split[0]))
-		hex := strings.TrimSpace(split[1])
-
 		colors[category] = Color{
-			Hex:  hex,
-			Hash: getChecksum(hex),
+			Abbreviation: abbreviation,
+			Hex:          hex,
+			Hash:         getChecksum(hex),
 		}
 	}
 
@@ -479,13 +491,14 @@ func serveQuestion(questions *Questions, colors map[Category]Color, tpl *templat
 		securityHeaders(w)
 
 		question := Question{
-			Version:  ReleaseVersion,
-			Theme:    getTheme(r),
-			Question: "",
-			Answer:   "",
-			Category: Category(""),
-			Color:    color.Hex,
-			Settings: "",
+			Abbreviation: color.Abbreviation,
+			Version:      ReleaseVersion,
+			Theme:        getTheme(r),
+			Question:     "",
+			Answer:       "",
+			Category:     Category(""),
+			Color:        color.Hex,
+			Settings:     "",
 		}
 
 		switch {
