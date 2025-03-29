@@ -67,17 +67,17 @@ A file containing custom hex color mappings for categories can be specified via 
 
 The app expects the following format:
 ```
-Entertainment|#da6ab2
-History|#e5cb3a
-Arts & Literature|#7a563c
-Science & Nature|#157255
-Sports & Leisure|#db6327
-Global View|#6d6b82
-Sound & Screen|#a04251
-News|#b37e00
-The Written Word|#7a4e34
-Innovations|#4f7144
-Game Time|#a66231
+<category>|<color hex code>|[abbreviation]
+```
+
+For example:
+```
+Art & Culture|#925749|AC
+Game Time|#a66231|GT
+Geography|#2a7c8b|G
+History|#e5cb3a|H
+News|#b37e00|NWS
+The Written Word|#7a4e34|WW
 [...]
 ```
 
