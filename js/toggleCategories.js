@@ -27,3 +27,26 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('set-categories')
     .addEventListener('click', setCategories);
 });
+
+function setNone() {
+    document.querySelectorAll('input[type="checkbox"]').forEach(function(checkbox) {
+        checkbox.checked = false;
+    })
+}
+
+
+document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('select-none')
+    .addEventListener('click', setNone);
+});
+
+function setAll() {
+    document.querySelectorAll('input[type="checkbox"]').forEach(function(checkbox) {
+        checkbox.checked = true;
+    })
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('select-all')
+    .addEventListener('click', setAll);
+});

@@ -62,12 +62,14 @@ func getSettingsTemplate() string {
 	      <ul>
 {{.Categories}}
           </ul>
+		  <input id="select-none" type="submit" value="Select none"></input>
 	      <input id="set-categories" type="submit"></input>
+		  <input id="select-all" type="submit" value="Select all"></input>
         </div>
 	  </div>
 	  <div class="settings-item">
 	    <h2>Theme</h2>
-	      <input type="radio" id="light-mode" name="theme" value="lightMode" checked />
+	      <input type="radio" id="light-mode" name="theme" value="lightMode" />
 		  <label for="light-mode">Light mode</label><br />
 		  <input type="radio" id="dark-mode" name="theme" value="darkMode" />
 		  <label for="dark-mode">Dark mode</label><br />
@@ -92,9 +94,9 @@ func serveSettingsPage(questions *Questions, tpl *template.Template, errorChanne
 
 		for _, j := range questions.CategoryStrings() {
 			if slices.Contains(selected, j) {
-				toggles.WriteString(fmt.Sprintf("          <li><label><input type=\"checkbox\" name=\"%s\" checked>%s</label></li>\n", j, j))
+				toggles.WriteString(fmt.Sprintf("            <li><label><input type=\"checkbox\" name=\"%s\" checked>%s</label></li>\n", j, j))
 			} else {
-				toggles.WriteString(fmt.Sprintf("          <li><label><input type=\"checkbox\" name=\"%s\">%s</label></li>\n", j, j))
+				toggles.WriteString(fmt.Sprintf("            <li><label><input type=\"checkbox\" name=\"%s\">%s</label></li>\n", j, j))
 			}
 		}
 
