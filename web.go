@@ -10,6 +10,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -168,7 +169,9 @@ func servePage(args []string) error {
 		registerReloadInterval(paths, questions, quit, errorChannel)
 	}
 
-	colors := loadColors(colorsFile, errorChannel)
+	validColor := regexp.MustCompile(ValidHexColor)
+
+	colors := loadColors(colorsFile, validColor, errorChannel)
 
 	if settings {
 		registerSettingsPage(mux, questions, errorChannel)

@@ -18,6 +18,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"strings"
 	"sync"
@@ -189,7 +190,7 @@ func getQuestionTemplate() string {
     <a href="/"><p id="question">{{.Question}}</p></a>
     <button id="toggle-answer">Show Answer</button>
     <div id="answer"><p>{{.Answer}}</p></div>
-    <div class="footer"><p>{{.Category}} ({{.Abbreviation}})</p></div>
+    <div class="footer"><p>{{.Category}} {{.Abbreviation}}</p></div>
   </body>
 </html>`
 }
@@ -201,7 +202,7 @@ func getChecksum(hex string) string {
 	return base64.StdEncoding.EncodeToString(h.Sum(nil))
 }
 
-func loadColors(path string, errorChannel chan<- error) map[Category]Color {
+func loadColors(path string, valid *regexp.Regexp, errorChannel chan<- error) map[Category]Color {
 	if colorsFile == "" {
 		return map[Category]Color{}
 	}
@@ -249,7 +250,23 @@ func loadColors(path string, errorChannel chan<- error) map[Category]Color {
 			hex = strings.TrimSpace(split[1])
 		default:
 			if verbose {
-				fmt.Printf("Invalid color mapping: `%s`. Skipping.\n", line)
+				errorChannel <- fmt.Errorf("invalid color mapping in `%s`", line)
+			}
+
+			continue
+		}
+
+		if category == "" {
+			if verbose {
+				errorChannel <- fmt.Errorf("no category name provided in `%s`", line)
+			}
+
+			continue
+		}
+
+		if valid.FindAllString(hex, -1) == nil {
+			if verbose {
+				errorChannel <- fmt.Errorf("invalid color hex code in `%s`", line)
 			}
 
 			continue
@@ -490,8 +507,14 @@ func serveQuestion(questions *Questions, colors map[Category]Color, tpl *templat
 
 		securityHeaders(w)
 
+		var abbreviation = ""
+
+		if color.Abbreviation != "" {
+			abbreviation = fmt.Sprintf("(%s)", color.Abbreviation)
+		}
+
 		question := Question{
-			Abbreviation: color.Abbreviation,
+			Abbreviation: abbreviation,
 			Version:      ReleaseVersion,
 			Theme:        getTheme(r),
 			Question:     "",
