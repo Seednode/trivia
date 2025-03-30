@@ -56,25 +56,36 @@ func getSettingsTemplate() string {
   <body>
     <p id="settings-link"><a href="/">Back to homepage</a></p>
 	<div class="settings-container">
-      <div class="settings-item">
-	    <div class="settings-scrollable">
-	      <h2>Categories</h2>
+  	  <div class="settings-wrapper">
+        <div class="settings-section">
+          <h2>Categories</h2>
 	      <ul>
 {{.Categories}}
           </ul>
-		  <input id="select-none" type="submit" value="Select none"></input>
-	      <input id="set-categories" type="submit"></input>
-		  <input id="select-all" type="submit" value="Select all"></input>
-        </div>
-	  </div>
-	  <div class="settings-item">
-	    <h2>Theme</h2>
-	      <input type="radio" id="light-mode" name="theme" value="lightMode" />
-		  <label for="light-mode">Light mode</label><br />
-		  <input type="radio" id="dark-mode" name="theme" value="darkMode" />
-		  <label for="dark-mode">Dark mode</label><br />
-	  	<input id="set-theme" type="submit"></input>
-	  </div>
+	    </div>
+		<div class="select-buttons">
+	      <button id="select-none" class="settings-select">Select None</button>
+	      <button id="select-all" class="settings-select">Select All</button>
+		</div>
+	    <button id="set-categories" class="settings-submit">Submit</button>
+      </div>
+
+      <div class="settings-wrapper">
+ 	    <div class="settings-section">
+	      <h2>Theme</h2>
+		    <div class="theme-options">
+              <label for="light-mode">
+			    <input type="radio" id="light-mode" name="theme" value="lightMode" />
+		        Light mode
+			  </label>
+			  <label for="dark-mode">
+		        <input type="radio" id="dark-mode" name="theme" value="darkMode" />
+		        Dark mode</label>
+			  </label>
+			</div>
+	    </div>
+	    <button id="set-theme" class="settings-submit">Submit</button>
+      </div>
 	</div>
   </body>
 </html>`

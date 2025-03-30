@@ -119,7 +119,7 @@
   }
   
   input {
-    margin-right: 8px;
+    margin-right: .5vw;
   }
   
   h2 {
@@ -136,18 +136,91 @@
 
   .settings-container {
     display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+    justify-content: center;
+    margin: 2rem auto;
+    max-width: 1000px;
+    padding: 0 1rem;
+  }
+  
+  .settings-wrapper {
+    flex: 1 1 300px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-height: 80vh;
+  }
+  
+  .settings-section {
+    width: 100%;
     flex: 1;
-    gap: 1rem;
-  }
-
-  .settings-item {
-    border-style: ridge; 
-    border-width: 5px;
-    height: 80vh;
     overflow-y: auto;
-    padding: 20px;
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    background-color: var(--background);
+    scrollbar-width: none;
+  }
+  
+  .settings-section h2 {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+  }
+  
+  .settings-section form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .settings-submit {
+    margin-top: 1rem;
+    padding: 0.5rem 1.25rem;
+    font-size: 1rem;
+    font-weight: bold;
+    background-color: var(--highlight);
+    color: var(--content);
+    border: none;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+  
+  .settings-submit:hover,
+  .settings-select:hover {
+    background-color: var(--comment);
   }
 
-  .settings-scrollable {
-    max-height: 0;
+  .select-buttons {
+    display: flex;
+    gap: .75rem;
+    justify-content: center;
+    margin-bottom: 1rem;
+    font-size: .8rem;
+  }
+
+  .settings-select {
+    margin-top: 1rem;
+    padding: .25rem .5rem;
+    font-size: .8rem;
+    font-weight: bold;
+    background-color: var(--highlight);
+    color: var(--content);
+    border: none;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+
+  .theme-options {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+    padding-left: 0.5rem;
+    gap: 0.5rem;
+  }
+  
+  input[type="radio"] {
+    margin-right: 0.5rem;
   }
