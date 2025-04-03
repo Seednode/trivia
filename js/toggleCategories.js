@@ -34,7 +34,6 @@ function setNone() {
     })
 }
 
-
 document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('select-none')
     .addEventListener('click', setNone);
