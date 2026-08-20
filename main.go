@@ -17,7 +17,7 @@ import (
 
 const (
 	ValidHexColor  string = `^#[a-f0-9]{6}$`
-	ReleaseVersion string = "5.4.0"
+	ReleaseVersion string = "5.5.0"
 )
 
 var (
